@@ -10,11 +10,7 @@ dev-debug.log
 node_modules/
 
 # Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env*
 
 # Editor directories and files
 .idea
@@ -24,6 +20,13 @@ node_modules/
 *.njsproj
 *.sln
 *.sw?
+
+# AI/MCP configuration
+.claude/
+.cursor/
+.gemini/
+.taskmaster/
+.mcp.json
 
 # Build outputs
 dist/
