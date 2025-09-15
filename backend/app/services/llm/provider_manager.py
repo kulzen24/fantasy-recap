@@ -13,6 +13,7 @@ from app.models.llm import (
     ProviderConfig, ProviderStatus, ProviderError, AuthenticationError
 )
 from .base_provider import BaseLLMProvider
+from .providers import OpenAIProvider, AnthropicProvider, GoogleProvider
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,9 @@ class LLMProviderManager:
         self._fallback_order: List[LLMProvider] = []
         self._health_check_interval = 300  # 5 minutes
         self._last_health_check = datetime.utcnow() - timedelta(minutes=10)  # Force initial check
+        
+        # Auto-register built-in provider classes
+        self._register_builtin_providers()
     
     def register_provider_class(self, provider: LLMProvider, provider_class: Type[BaseLLMProvider]) -> None:
         """
@@ -43,6 +47,13 @@ class LLMProviderManager:
         """
         self._provider_classes[provider] = provider_class
         logger.info(f"Registered provider class: {provider.value}")
+    
+    def _register_builtin_providers(self) -> None:
+        """Register all built-in provider classes"""
+        self.register_provider_class(LLMProvider.OPENAI, OpenAIProvider)
+        self.register_provider_class(LLMProvider.ANTHROPIC, AnthropicProvider)
+        self.register_provider_class(LLMProvider.GOOGLE, GoogleProvider)
+        logger.info("Registered all built-in provider classes")
     
     async def add_provider(self, config: ProviderConfig) -> bool:
         """
