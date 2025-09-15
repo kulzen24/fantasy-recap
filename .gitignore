@@ -22,10 +22,10 @@ node_modules/
 *.sw?
 
 # AI/MCP configuration
-.claude/
-.cursor/
-.gemini/
-.taskmaster/
+.claude
+.cursor
+.gemini
+.taskmaster
 .mcp.json
 
 # Build outputs
