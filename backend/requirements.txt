@@ -8,3 +8,21 @@ pydantic==2.11.9
 pydantic-settings==2.7.0
 PyJWT==2.10.1
 python-jose[cryptography]==3.3.0
+
+# Fantasy Platform APIs
+yahoo-fantasy-api==2.3.0
+yfpy==17.0.0
+yahoo_oauth==2.1.1
+requests==2.32.5
+aiohttp==3.10.11
+
+# ESPN Fantasy (unofficial)
+espn-api==0.30.0
+
+# Rate limiting and retry
+tenacity==9.0.0
+aiolimiter==1.1.0
+
+# Data validation and caching
+redis==5.2.1
+celery==5.4.0

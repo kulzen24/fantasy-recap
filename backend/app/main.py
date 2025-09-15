@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from app.core.config import settings
 from app.core.auth import get_current_user, require_authentication, optional_authentication
 from app.api.auth import router as auth_router
+from app.api.fantasy.yahoo import router as yahoo_router
 
 # Load environment variables
 load_dotenv()
@@ -43,6 +44,7 @@ app.add_middleware(
 
 # Include API routes
 app.include_router(auth_router, prefix=f"{settings.API_V1_STR}/auth", tags=["authentication"])
+app.include_router(yahoo_router, prefix=f"{settings.API_V1_STR}/fantasy/yahoo", tags=["fantasy", "yahoo"])
 
 @app.get("/")
 async def root():
