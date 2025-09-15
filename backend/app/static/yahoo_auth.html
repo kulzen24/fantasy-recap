@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yahoo Fantasy OAuth Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .step {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏈 Yahoo Fantasy OAuth Test</h1>
+        <p>This page will help you test the Yahoo Fantasy API OAuth flow and query your league data.</p>
+        
+        <div class="step">
+            <h3>Step 1: Get Yahoo Authorization URL</h3>
+            <button onclick="getAuthUrl()">Get Yahoo Auth URL</button>
+            <div id="authUrlResult"></div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 2: Yahoo Authorization</h3>
+            <p>Click the authorization URL above to authenticate with Yahoo. After authorization, you'll be redirected back with a code.</p>
+            <div id="callbackInfo" class="hidden">
+                <p><strong>Callback URL:</strong> <code>http://localhost:8000/api/v1/fantasy/yahoo/callback</code></p>
+                <p>After Yahoo redirects you back, copy the authorization code from the URL.</p>
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 3: Exchange Code for Token</h3>
+            <input type="text" id="authCode" placeholder="Enter authorization code from callback" style="width: 300px; padding: 8px;">
+            <button onclick="exchangeToken()">Exchange for Token</button>
+            <div id="tokenResult"></div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 4: Get Your Leagues</h3>
+            <button onclick="getLeagues()">Get My Leagues</button>
+            <div id="leaguesResult"></div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 5: Get League Teams</h3>
+            <input type="text" id="leagueId" placeholder="Enter League ID" style="width: 200px; padding: 8px;">
+            <button onclick="getLeagueTeams()">Get Teams</button>
+            <div id="teamsResult"></div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = null;
+
+        async function getAuthUrl() {
+            try {
+                const response = await fetch('/api/v1/fantasy/yahoo/auth-url');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('authUrlResult').innerHTML = `
+                        <div class="success">
+                            <p><strong>Success!</strong> Click the link below to authorize with Yahoo:</p>
+                            <p><a href="${data.auth_url}" target="_blank" style="color: #007bff; text-decoration: none;">
+                                🔗 Authorize with Yahoo Fantasy
+                            </a></p>
+                        </div>
+                    `;
+                    document.getElementById('callbackInfo').classList.remove('hidden');
+                } else {
+                    throw new Error(data.error || 'Failed to get auth URL');
+                }
+            } catch (error) {
+                document.getElementById('authUrlResult').innerHTML = `
+                    <div class="error">Error: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function exchangeToken() {
+            const code = document.getElementById('authCode').value;
+            if (!code) {
+                alert('Please enter the authorization code');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/v1/fantasy/yahoo/callback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ code: code })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    authToken = data.token;
+                    document.getElementById('tokenResult').innerHTML = `
+                        <div class="success">
+                            <p><strong>Success!</strong> Token exchanged successfully.</p>
+                            <p>You can now make authenticated API calls.</p>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(data.error || 'Failed to exchange token');
+                }
+            } catch (error) {
+                document.getElementById('tokenResult').innerHTML = `
+                    <div class="error">Error: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function getLeagues() {
+            if (!authToken) {
+                alert('Please complete the OAuth flow first');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/v1/fantasy/yahoo/leagues', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const leagues = data.data;
+                    let html = '<div class="success"><h4>Your Yahoo Fantasy Leagues:</h4>';
+                    
+                    leagues.forEach(league => {
+                        html += `
+                            <div style="margin: 10px 0; padding: 10px; background: white; border-radius: 5px;">
+                                <strong>${league.name}</strong> (ID: ${league.league_id})<br>
+                                <small>Season: ${league.season} | Teams: ${league.num_teams || 'N/A'}</small>
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div>';
+                    document.getElementById('leaguesResult').innerHTML = html;
+                } else {
+                    throw new Error(data.error || 'Failed to get leagues');
+                }
+            } catch (error) {
+                document.getElementById('leaguesResult').innerHTML = `
+                    <div class="error">Error: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function getLeagueTeams() {
+            const leagueId = document.getElementById('leagueId').value;
+            if (!leagueId) {
+                alert('Please enter a League ID');
+                return;
+            }
+
+            if (!authToken) {
+                alert('Please complete the OAuth flow first');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/fantasy/yahoo/leagues/${leagueId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const league = data.data;
+                    let html = `<div class="success">
+                        <h4>League: ${league.name}</h4>
+                        <p><strong>Teams in this league:</strong></p>
+                    `;
+                    
+                    if (league.teams && league.teams.length > 0) {
+                        league.teams.forEach(team => {
+                            html += `
+                                <div style="margin: 10px 0; padding: 10px; background: white; border-radius: 5px;">
+                                    <strong>${team.name}</strong><br>
+                                    <small>Owner: ${team.manager_name || 'N/A'} | Record: ${team.wins || 0}-${team.losses || 0}</small>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        html += '<p>No teams found or teams data not available.</p>';
+                    }
+                    
+                    html += '</div>';
+                    document.getElementById('teamsResult').innerHTML = html;
+                } else {
+                    throw new Error(data.error || 'Failed to get league teams');
+                }
+            } catch (error) {
+                document.getElementById('teamsResult').innerHTML = `
+                    <div class="error">Error: ${error.message}</div>
+                `;
+            }
+        }
+
+        // Check for callback parameters on page load
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const error = urlParams.get('error');
+            
+            if (code) {
+                document.getElementById('authCode').value = code;
+                alert('Authorization code received! Click "Exchange for Token" to continue.');
+            } else if (error) {
+                alert(`OAuth Error: ${error}`);
+            }
+        };
+    </script>
+</body>
+</html>

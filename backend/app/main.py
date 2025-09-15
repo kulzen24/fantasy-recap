@@ -7,6 +7,7 @@ from datetime import datetime
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 
 from app.core.config import settings
@@ -41,6 +42,9 @@ app.add_middleware(
     TrustedHostMiddleware, 
     allowed_hosts=["localhost", "127.0.0.1", "*.vercel.app", "*.supabase.co"]
 )
+
+# Mount static files for OAuth testing
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # Include API routes
 app.include_router(auth_router, prefix=f"{settings.API_V1_STR}/auth", tags=["authentication"])
