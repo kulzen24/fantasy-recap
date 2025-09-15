@@ -3,8 +3,8 @@ Application configuration settings
 """
 
 import os
-from typing import Optional
-from pydantic import BaseSettings
+from typing import Optional, List
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     SUPABASE_URL: Optional[str] = None
     SUPABASE_ANON_KEY: Optional[str] = None
     SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
+    SUPABASE_JWT_SECRET: Optional[str] = None  # For JWT validation
     
     # LLM Providers (Optional - users provide their own keys)
     OPENAI_API_KEY: Optional[str] = None
@@ -35,9 +36,19 @@ class Settings(BaseSettings):
     JWT_SECRET: Optional[str] = None
     ENCRYPTION_KEY: Optional[str] = None
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    # Project
+    PROJECT_NAME: str = "Fantasy Recaps API"
+    API_VERSION: str = "1.0.0"
+    API_V1_STR: str = "/api/v1"
+
+    # CORS
+    BACKEND_CORS_ORIGINS: List[str] = [
+        "http://localhost:3000", 
+        "http://127.0.0.1:3000",
+        "https://iwvbfchhjylrxxywdvue.supabase.co"
+    ]
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
 # Global settings instance
