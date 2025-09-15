@@ -90,3 +90,9 @@ pids
 
 # Database directory (excluded from commits)
 database/
+
+.env
+
+# Task files
+# tasks.json
+# tasks/ 

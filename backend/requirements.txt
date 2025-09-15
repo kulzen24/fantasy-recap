@@ -26,3 +26,9 @@ aiolimiter==1.1.0
 # Data validation and caching
 redis==5.2.1
 celery==5.4.0
+
+# Encryption and LLM providers
+cryptography==45.1.0
+openai==1.107.3
+anthropic==0.67.0
+google-generativeai==0.8.3

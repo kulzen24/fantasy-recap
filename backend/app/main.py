@@ -14,6 +14,8 @@ from app.core.config import settings
 from app.core.auth import get_current_user, require_authentication, optional_authentication
 from app.api.auth import router as auth_router
 from app.api.fantasy.yahoo import router as yahoo_router
+from app.api.user_leagues import router as user_leagues_router
+from app.api.llm_keys import router as llm_keys_router
 
 # Load environment variables
 load_dotenv()
@@ -49,6 +51,8 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 # Include API routes
 app.include_router(auth_router, prefix=f"{settings.API_V1_STR}/auth", tags=["authentication"])
 app.include_router(yahoo_router, prefix=f"{settings.API_V1_STR}/fantasy/yahoo", tags=["fantasy", "yahoo"])
+app.include_router(user_leagues_router, prefix=f"{settings.API_V1_STR}/leagues", tags=["leagues", "user-management"])
+app.include_router(llm_keys_router, prefix=f"{settings.API_V1_STR}/llm-keys", tags=["llm", "api-keys"])
 
 @app.get("/")
 async def root():
