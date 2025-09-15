@@ -66,10 +66,27 @@ __pycache__/
 venv/
 .venv/
 
+# Test files and temporary scripts
+test_*.py
+*_test.py
+*_mock.py
+*.test.js
+*.spec.js
+
+# Setup and documentation bloat
+*_SETUP.md
+SETUP_*.md
+
+# OAuth and API tokens
+*oauth*.json
+tokens/
+*.token
+
 # Runtime data
 pids
 *.pid
 *.seed
 *.pid.lock
 
+# Database directory (excluded from commits)
 database/
