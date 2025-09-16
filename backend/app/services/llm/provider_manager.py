@@ -14,6 +14,7 @@ from app.models.llm import (
 )
 from .base_provider import BaseLLMProvider
 from .providers import OpenAIProvider, AnthropicProvider, GoogleProvider
+from .user_provider_config import user_provider_service
 
 logger = logging.getLogger(__name__)
 
@@ -221,12 +222,19 @@ class LLMProviderManager:
         
         self._last_health_check = now
     
-    async def _select_provider(self, preferred_provider: Optional[LLMProvider] = None) -> BaseLLMProvider:
+    async def _select_provider(
+        self, 
+        preferred_provider: Optional[LLMProvider] = None,
+        user_id: Optional[str] = None,
+        request_type: str = "general"
+    ) -> BaseLLMProvider:
         """
         Select a provider for a request
         
         Args:
             preferred_provider: Preferred provider if specified
+            user_id: User ID for preference-based selection
+            request_type: Type of request for optimization
             
         Returns:
             BaseLLMProvider: Selected provider instance
@@ -235,6 +243,28 @@ class LLMProviderManager:
             ProviderError: If no providers are available
         """
         await self._check_provider_health()
+        
+        # Get user preferences if user_id provided
+        user_selection = None
+        if user_id:
+            try:
+                user_selection = await user_provider_service.get_provider_selection_for_user(user_id, request_type)
+                logger.info(f"User {user_id} provider selection: {user_selection}")
+            except Exception as e:
+                logger.warning(f"Failed to get user provider selection: {e}")
+        
+        # Override preferred provider with user preference if available
+        if user_selection and not preferred_provider:
+            preferred_provider = user_selection.get("preferred_provider")
+            logger.info(f"Using user's preferred provider: {preferred_provider}")
+        
+        # Update fallback order with user preferences
+        user_fallbacks = []
+        if user_selection:
+            user_fallbacks = user_selection.get("fallback_providers", [])
+            # Temporarily update fallback order for this request
+            original_fallback_order = self._fallback_order[:]
+            self._fallback_order = user_fallbacks + [p for p in self._fallback_order if p not in user_fallbacks]
         
         # Try preferred provider first
         if preferred_provider and preferred_provider in self._providers:
@@ -257,6 +287,10 @@ class LLMProviderManager:
                     logger.info(f"Using fallback provider: {provider.value}")
                     return instance
         
+        # Restore original fallback order if it was modified
+        if user_selection and 'original_fallback_order' in locals():
+            self._fallback_order = original_fallback_order
+        
         # No providers available
         available = self.get_available_providers()
         raise ProviderError(
@@ -267,7 +301,8 @@ class LLMProviderManager:
     async def generate_text(
         self,
         request: LLMRequest,
-        preferred_provider: Optional[LLMProvider] = None
+        preferred_provider: Optional[LLMProvider] = None,
+        user_id: Optional[str] = None
     ) -> LLMResponse:
         """
         Generate text using the best available provider
@@ -275,6 +310,7 @@ class LLMProviderManager:
         Args:
             request: LLM request
             preferred_provider: Preferred provider if specified
+            user_id: User ID for preference-based selection
             
         Returns:
             LLMResponse: Generated response
@@ -282,7 +318,7 @@ class LLMProviderManager:
         Raises:
             ProviderError: If generation fails
         """
-        provider_instance = await self._select_provider(preferred_provider)
+        provider_instance = await self._select_provider(preferred_provider, user_id, "general")
         
         try:
             logger.info(f"Generating text with {provider_instance.provider.value}")
@@ -297,7 +333,7 @@ class LLMProviderManager:
                 len(self.get_available_providers()) > 1):
                 
                 logger.info("Attempting fallback provider for text generation")
-                fallback_provider = await self._select_provider()
+                fallback_provider = await self._select_provider(user_id=user_id, request_type="general")
                 if fallback_provider.provider != provider_instance.provider:
                     return await fallback_provider.generate_text(request)
             
@@ -306,7 +342,8 @@ class LLMProviderManager:
     async def generate_recap(
         self,
         request: RecapRequest,
-        preferred_provider: Optional[LLMProvider] = None
+        preferred_provider: Optional[LLMProvider] = None,
+        user_id: Optional[str] = None
     ) -> RecapResponse:
         """
         Generate a fantasy football recap using the best available provider
@@ -314,6 +351,7 @@ class LLMProviderManager:
         Args:
             request: Recap request
             preferred_provider: Preferred provider if specified
+            user_id: User ID for preference-based selection
             
         Returns:
             RecapResponse: Generated recap
@@ -321,7 +359,7 @@ class LLMProviderManager:
         Raises:
             ProviderError: If generation fails
         """
-        provider_instance = await self._select_provider(preferred_provider)
+        provider_instance = await self._select_provider(preferred_provider, user_id, "recap")
         
         try:
             logger.info(f"Generating recap with {provider_instance.provider.value}")
@@ -336,7 +374,7 @@ class LLMProviderManager:
                 len(self.get_available_providers()) > 1):
                 
                 logger.info("Attempting fallback provider for recap generation")
-                fallback_provider = await self._select_provider()
+                fallback_provider = await self._select_provider(user_id=user_id, request_type="recap")
                 if fallback_provider.provider != provider_instance.provider:
                     return await fallback_provider.generate_recap(request)
             
@@ -393,6 +431,17 @@ class LLMProviderManager:
             return None
         
         return min(estimates.keys(), key=lambda p: estimates[p])
+    
+    def get_preferred_provider(self) -> Optional[BaseLLMProvider]:
+        """
+        Get the preferred (default) provider instance
+        
+        Returns:
+            Optional[BaseLLMProvider]: Preferred provider or None
+        """
+        if self._default_provider and self._default_provider in self._providers:
+            return self._providers[self._default_provider]
+        return None
     
     async def shutdown(self) -> None:
         """Shutdown the provider manager and clean up resources"""
