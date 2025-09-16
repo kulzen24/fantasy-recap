@@ -7,7 +7,7 @@ import logging
 from typing import List, Dict, Any
 from fastapi import APIRouter, HTTPException, Depends, status
 
-from app.core.auth import require_authentication
+from app.core.auth import get_current_user
 from app.models.nlq import NLQRequest, NLQResponse
 from app.services.nlq.nlq_service import NaturalLanguageQueryService
 from app.services.llm.provider_manager import LLMProviderManager
@@ -28,7 +28,7 @@ nlq_service = NaturalLanguageQueryService(provider_manager, fantasy_service)
 @router.post("/query", response_model=NLQResponse)
 async def process_natural_language_query(
     request: NLQRequest,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Process a natural language query about fantasy leagues
@@ -69,7 +69,7 @@ async def process_natural_language_query(
 
 @router.get("/examples")
 async def get_query_examples(
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ) -> Dict[str, List[str]]:
     """
     Get example natural language queries for user guidance
@@ -146,7 +146,7 @@ async def get_nlq_health_status() -> Dict[str, Any]:
 @router.post("/query/batch")
 async def process_batch_queries(
     queries: List[NLQRequest],
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ) -> Dict[str, Any]:
     """
     Process multiple natural language queries in batch
@@ -200,7 +200,7 @@ async def process_batch_queries(
 @router.get("/analytics/{league_id}")
 async def get_query_analytics(
     league_id: str,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ) -> Dict[str, Any]:
     """
     Get analytics about queries for a specific league
@@ -246,7 +246,7 @@ async def get_query_analytics(
 @router.post("/feedback")
 async def submit_query_feedback(
     feedback_data: Dict[str, Any],
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Submit feedback on a query response

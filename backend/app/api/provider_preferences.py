@@ -8,7 +8,7 @@ from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, HTTPException, Depends, status
 from pydantic import BaseModel
 
-from app.core.auth import require_authentication
+from app.core.auth import get_current_user
 from app.models.llm import LLMProvider
 from app.services.llm.user_provider_config import user_provider_service
 
@@ -38,7 +38,7 @@ class ProviderPreferenceResponse(BaseModel):
 
 @router.get("/preferences", response_model=ProviderPreferenceResponse)
 async def get_user_provider_preferences(
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Get user's current LLM provider preferences
@@ -68,7 +68,7 @@ async def get_user_provider_preferences(
 @router.post("/preferences")
 async def update_user_provider_preferences(
     request: ProviderPreferenceRequest,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Update user's LLM provider preferences
@@ -134,7 +134,7 @@ async def update_user_provider_preferences(
 
 @router.get("/available-providers")
 async def get_available_providers(
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ) -> Dict[str, List[str]]:
     """
     Get list of providers that the user has valid API keys for
@@ -160,7 +160,7 @@ async def get_available_providers(
 
 @router.delete("/preferences")
 async def reset_user_provider_preferences(
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Reset user's provider preferences to defaults
@@ -199,7 +199,7 @@ async def reset_user_provider_preferences(
 @router.get("/recommendation")
 async def get_provider_recommendation(
     request_type: str = "general",
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Get provider recommendation for a specific request type

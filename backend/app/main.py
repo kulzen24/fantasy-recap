@@ -2,16 +2,24 @@
 Fantasy Football Recap Generator - FastAPI Backend
 """
 
+# Load environment variables FIRST, before any other imports
+from dotenv import load_dotenv
 import os
+
+# Get the absolute path to the root directory .env file
+# __file__ is: /path/to/fantasy-recaps/backend/app/main.py
+# We need: /path/to/fantasy-recaps/.env
+root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+env_path = os.path.join(root_dir, '.env')
+load_dotenv(env_path, override=True)
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
-from dotenv import load_dotenv
 
 from app.core.config import settings
-from app.core.auth import get_current_user, require_authentication, optional_authentication
+from app.core.auth import get_current_user, get_current_user_optional
 from app.core.security import (
     SecurityHeadersMiddleware, HTTPSRedirectMiddleware, RateLimitMiddleware, 
     InputValidationMiddleware, security_config
@@ -19,6 +27,7 @@ from app.core.security import (
 from app.api.auth import router as auth_router
 from app.api.fantasy.yahoo import router as yahoo_router
 from app.api.user_leagues import router as user_leagues_router
+from app.api.user_profiles import router as user_profiles_router
 from app.api.llm_keys import router as llm_keys_router
 from app.api.nlq import router as nlq_router
 from app.api.provider_preferences import router as provider_preferences_router
@@ -26,13 +35,11 @@ from app.api.security import router as security_router
 from app.api.templates import router as templates_router
 from app.api.recaps import router as recaps_router
 
-# Load environment variables
-load_dotenv()
 
 # Create FastAPI app
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    description="Backend API for Fantasy Football Recap Generator with Supabase Authentication",
+    description="Backend API for StatChat - AI-Powered Fantasy Football Insights with Supabase Authentication",
     version=settings.API_VERSION,
     docs_url="/docs",
     redoc_url="/redoc",
@@ -83,6 +90,7 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.include_router(auth_router, prefix=f"{settings.API_V1_STR}/auth", tags=["authentication"])
 app.include_router(yahoo_router, prefix=f"{settings.API_V1_STR}/fantasy/yahoo", tags=["fantasy", "yahoo"])
 app.include_router(user_leagues_router, prefix=f"{settings.API_V1_STR}/leagues", tags=["leagues", "user-management"])
+app.include_router(user_profiles_router, tags=["user-profiles"])
 app.include_router(llm_keys_router, prefix=f"{settings.API_V1_STR}/llm-keys", tags=["llm", "api-keys"])
 app.include_router(nlq_router, prefix=f"{settings.API_V1_STR}/nlq", tags=["natural-language", "queries"])
 app.include_router(provider_preferences_router, prefix=f"{settings.API_V1_STR}/provider-preferences", tags=["llm", "preferences"])
@@ -94,7 +102,7 @@ app.include_router(recaps_router, prefix=f"{settings.API_V1_STR}/recaps", tags=[
 async def root():
     """Root endpoint"""
     return {
-        "message": "Fantasy Recaps API",
+        "message": "StatChat API",
         "version": settings.API_VERSION,
         "status": "running",
         "timestamp": datetime.utcnow().isoformat(),
@@ -107,7 +115,7 @@ async def health_check():
     """Health check endpoint"""
     return {
         "status": "ok",
-        "message": "Fantasy Recaps API is running",
+        "message": "StatChat API is running",
         "timestamp": datetime.utcnow().isoformat(),
         "python_version": os.sys.version,
         "environment": settings.ENVIRONMENT,
@@ -119,7 +127,7 @@ async def health_check():
 async def api_info():
     """API version information"""
     return {
-        "message": "Fantasy Recaps API v1",
+        "message": "StatChat API v1",
         "version": settings.API_VERSION,
         "endpoints": {
             "health": "/health",
@@ -133,7 +141,7 @@ async def api_info():
 
 
 @app.get(f"{settings.API_V1_STR}/me")
-async def get_current_user_info(current_user: dict = Depends(require_authentication)):
+async def get_current_user_info(current_user: dict = Depends(get_current_user)):
     """Get current authenticated user information"""
     return {
         "user": current_user,
@@ -142,7 +150,7 @@ async def get_current_user_info(current_user: dict = Depends(require_authenticat
 
 
 @app.get(f"{settings.API_V1_STR}/protected")
-async def protected_endpoint(current_user: dict = Depends(require_authentication)):
+async def protected_endpoint(current_user: dict = Depends(get_current_user)):
     """Example protected endpoint that requires authentication"""
     return {
         "message": f"Hello {current_user.get('email', 'User')}!",
@@ -153,7 +161,7 @@ async def protected_endpoint(current_user: dict = Depends(require_authentication
 
 
 @app.get(f"{settings.API_V1_STR}/public")
-async def public_endpoint(current_user: dict = Depends(optional_authentication)):
+async def public_endpoint(current_user: dict = Depends(get_current_user_optional)):
     """Example public endpoint that works with or without authentication"""
     if current_user:
         return {

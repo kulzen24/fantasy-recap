@@ -8,7 +8,7 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Depends, Query, status
 from pydantic import BaseModel
 
-from app.core.auth import require_authentication
+from app.core.auth import get_current_user
 from app.models.recap import (
     RecapGenerationRequest, GeneratedRecap, RecapResponse, RecapHistory,
     RecapStatus, InsightType
@@ -64,7 +64,7 @@ async def generate_recap(
     include_awards: bool = True,
     include_predictions: bool = True,
     focus_on_user_team: bool = False,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Generate a new fantasy football recap
@@ -121,7 +121,7 @@ async def list_recaps(
     week: Optional[int] = Query(None, ge=1, le=18),
     season: Optional[int] = Query(None, ge=2020),
     status_filter: Optional[RecapStatus] = None,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Get list of user's generated recaps
@@ -152,7 +152,7 @@ async def list_recaps(
 @router.get("/{recap_id}", response_model=GeneratedRecap)
 async def get_recap(
     recap_id: str,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Get details of a specific recap
@@ -180,7 +180,7 @@ async def get_recap(
 @router.delete("/{recap_id}")
 async def delete_recap(
     recap_id: str,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Delete a generated recap
@@ -212,7 +212,7 @@ async def submit_feedback(
     content_quality: int = Query(..., ge=1, le=5),
     feedback_text: Optional[str] = None,
     improvement_suggestions: Optional[str] = None,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Submit feedback for a generated recap
@@ -238,7 +238,7 @@ async def submit_feedback(
 
 @router.get("/stats/summary", response_model=RecapStatsResponse)
 async def get_recap_stats(
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Get summary statistics about user's recaps
@@ -272,7 +272,7 @@ async def get_weekly_insights(
     league_id: str,
     week: int = Query(..., ge=1, le=18),
     season: int = Query(..., ge=2020),
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Get extracted insights for a specific week
@@ -303,7 +303,7 @@ async def regenerate_recap(
     tone: Optional[RecapTone] = None,
     length: Optional[RecapLength] = None,
     template_id: Optional[str] = None,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Regenerate an existing recap with different parameters
@@ -335,7 +335,7 @@ async def regenerate_recap(
 
 @router.get("/templates/recommendations")
 async def get_template_recommendations(
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Get recommendations for improving recap templates

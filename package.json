@@ -1,0 +1,20 @@
+{
+  "name": "fantasy-recaps",
+  "version": "1.0.0",
+  "description": "AI-powered fantasy sports recap generator",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "cd frontend && npm start",
+    "dev:backend": "cd backend && source venv/bin/activate && python3 -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
+    "install:frontend": "cd frontend && npm install",
+    "install:backend": "cd backend && source venv/bin/activate && pip install -r requirements.txt",
+    "install:all": "npm run install:frontend && npm run install:backend",
+    "build:frontend": "cd frontend && npm run build",
+    "test:frontend": "cd frontend && npm test",
+    "start:frontend": "cd frontend && npm start",
+    "frontend": "cd frontend && npm start"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

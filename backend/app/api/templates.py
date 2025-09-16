@@ -9,7 +9,7 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, status
 from pydantic import BaseModel
 
-from app.core.auth import require_authentication
+from app.core.auth import get_current_user
 from app.models.template import (
     UserTemplate, TemplateStatus, FileFormat, PromptTemplate,
     TemplateListResponse, TemplateAnalysisResponse
@@ -41,7 +41,7 @@ async def upload_template(
     file: UploadFile = File(...),
     user_notes: Optional[str] = Form(None),
     tags: Optional[str] = Form(None),
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Upload a new template file for style analysis
@@ -108,7 +108,7 @@ async def list_templates(
     page: int = 1,
     page_size: int = 20,
     status_filter: Optional[TemplateStatus] = None,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Get list of user's templates
@@ -141,7 +141,7 @@ async def list_templates(
 @router.get("/{template_id}", response_model=UserTemplate)
 async def get_template(
     template_id: str,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Get details of a specific template
@@ -172,7 +172,7 @@ async def get_template(
 async def analyze_template(
     template_id: str,
     force_reanalysis: bool = False,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Trigger or retrieve analysis for a template
@@ -209,7 +209,7 @@ async def analyze_template(
 @router.delete("/{template_id}")
 async def delete_template(
     template_id: str,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Delete a template and all associated data
@@ -241,7 +241,7 @@ async def delete_template(
 
 @router.get("/prompts/active", response_model=Optional[PromptTemplate])
 async def get_active_prompt_template(
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Get user's active prompt template
@@ -263,7 +263,7 @@ async def get_active_prompt_template(
 @router.post("/{template_id}/set-default")
 async def set_default_template(
     template_id: str,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Set a template as the user's default
@@ -306,7 +306,7 @@ async def set_default_template(
 
 @router.get("/stats/summary")
 async def get_template_stats(
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Get summary statistics about user's templates

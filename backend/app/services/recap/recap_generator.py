@@ -19,7 +19,7 @@ from app.models.llm import LLMRequest, RecapTone, RecapLength
 from app.services.recap.insight_analyzer import insight_analyzer
 from app.services.template.template_service import template_service
 from app.services.llm.provider_manager import provider_manager
-from app.core.supabase import get_supabase_client
+from app.core.supabase import supabase_client
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ class RecapGenerator:
     """Main service for generating fantasy football recaps"""
     
     def __init__(self):
-        self.supabase = get_supabase_client()
+        self.supabase = supabase_client.client
     
     async def generate_recap(self, request: RecapGenerationRequest) -> RecapResponse:
         """

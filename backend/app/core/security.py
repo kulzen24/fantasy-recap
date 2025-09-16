@@ -251,6 +251,8 @@ class SecurityConfig:
         return [
             "http://localhost:3000",
             "https://localhost:3000",
+            "https://statchat-ui.vercel.app",
+            "https://statchat-ashen.vercel.app",
             "https://*.vercel.app",
             "https://*.netlify.app"
         ]
@@ -258,13 +260,27 @@ class SecurityConfig:
     @property
     def trusted_hosts(self) -> List[str]:
         """Get trusted hosts based on environment"""
-        return [
+        import os
+        hosts = [
             "localhost",
             "127.0.0.1",
             "*.vercel.app",
             "*.netlify.app",
-            "*.supabase.co"
+            "*.supabase.co",
+            "*.ngrok.io",
+            "*.ngrok-free.app"
         ]
+        
+        # Add specific ngrok domain from environment
+        ngrok_domain = os.getenv("NGROK_DOMAIN")
+        if ngrok_domain:
+            # Extract hostname from full URL
+            from urllib.parse import urlparse
+            parsed = urlparse(ngrok_domain)
+            if parsed.netloc:
+                hosts.append(parsed.netloc)
+        
+        return hosts
 
 
 # Global security configuration
