@@ -12,10 +12,19 @@ from dotenv import load_dotenv
 
 from app.core.config import settings
 from app.core.auth import get_current_user, require_authentication, optional_authentication
+from app.core.security import (
+    SecurityHeadersMiddleware, HTTPSRedirectMiddleware, RateLimitMiddleware, 
+    InputValidationMiddleware, security_config
+)
 from app.api.auth import router as auth_router
 from app.api.fantasy.yahoo import router as yahoo_router
 from app.api.user_leagues import router as user_leagues_router
 from app.api.llm_keys import router as llm_keys_router
+from app.api.nlq import router as nlq_router
+from app.api.provider_preferences import router as provider_preferences_router
+from app.api.security import router as security_router
+from app.api.templates import router as templates_router
+from app.api.recaps import router as recaps_router
 
 # Load environment variables
 load_dotenv()
@@ -30,19 +39,41 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-# Configure CORS
+# Security Middleware (order matters - add security middleware first)
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allow_headers=["*"],
+    SecurityHeadersMiddleware,
+    enable_hsts=security_config.enable_hsts,
+    hsts_max_age=security_config.hsts_max_age
 )
 
-# Add security middleware
+app.add_middleware(
+    HTTPSRedirectMiddleware,
+    force_https=security_config.force_https
+)
+
+app.add_middleware(
+    InputValidationMiddleware,
+    max_content_length=security_config.max_content_length
+)
+
+app.add_middleware(
+    RateLimitMiddleware,
+    requests_per_minute=security_config.rate_limit_per_minute
+)
+
 app.add_middleware(
     TrustedHostMiddleware, 
-    allowed_hosts=["localhost", "127.0.0.1", "*.vercel.app", "*.supabase.co"]
+    allowed_hosts=security_config.trusted_hosts
+)
+
+# Configure CORS (after security middleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=security_config.cors_allowed_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allow_headers=["Authorization", "Content-Type", "X-Requested-With"],
+    expose_headers=["X-Total-Count", "X-Request-ID"],
 )
 
 # Mount static files for OAuth testing
@@ -53,6 +84,11 @@ app.include_router(auth_router, prefix=f"{settings.API_V1_STR}/auth", tags=["aut
 app.include_router(yahoo_router, prefix=f"{settings.API_V1_STR}/fantasy/yahoo", tags=["fantasy", "yahoo"])
 app.include_router(user_leagues_router, prefix=f"{settings.API_V1_STR}/leagues", tags=["leagues", "user-management"])
 app.include_router(llm_keys_router, prefix=f"{settings.API_V1_STR}/llm-keys", tags=["llm", "api-keys"])
+app.include_router(nlq_router, prefix=f"{settings.API_V1_STR}/nlq", tags=["natural-language", "queries"])
+app.include_router(provider_preferences_router, prefix=f"{settings.API_V1_STR}/provider-preferences", tags=["llm", "preferences"])
+app.include_router(security_router, prefix=f"{settings.API_V1_STR}/security", tags=["security", "monitoring"])
+app.include_router(templates_router, prefix=f"{settings.API_V1_STR}/templates", tags=["templates", "style-analysis"])
+app.include_router(recaps_router, prefix=f"{settings.API_V1_STR}/recaps", tags=["recaps", "generation"])
 
 @app.get("/")
 async def root():
