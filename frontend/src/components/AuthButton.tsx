@@ -8,7 +8,7 @@ export function AuthButton() {
     return (
       <button 
         disabled 
-        className="px-4 py-2 bg-gray-300 text-gray-500 rounded-md cursor-not-allowed"
+        className="px-4 py-2 bg-chat-surface-light dark:bg-chat-surface-dark text-chat-text-secondary-light dark:text-chat-text-secondary-dark rounded-md cursor-not-allowed transition-colors"
       >
         Loading...
       </button>
@@ -17,7 +17,7 @@ export function AuthButton() {
 
   if (user) {
     return (
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-3">
         <div className="flex items-center space-x-2">
           {user.user_metadata?.avatar_url && (
             <img
@@ -26,14 +26,14 @@ export function AuthButton() {
               className="w-8 h-8 rounded-full"
             />
           )}
-          <span className="text-sm text-gray-700">
+          <span className="text-sm text-chat-text-primary-light dark:text-chat-text-primary-dark hidden sm:inline">
             {user.user_metadata?.full_name || user.email}
           </span>
         </div>
         <button
           onClick={signOut}
           disabled={loading}
-          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+          className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 transition-colors text-sm"
         >
           Sign Out
         </button>
@@ -42,16 +42,16 @@ export function AuthButton() {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 flex flex-col items-center">
       {error && (
-        <div className="text-red-600 text-sm">
+        <div className="text-red-600 text-sm text-center">
           {error}
         </div>
       )}
       <button
         onClick={signInWithGoogle}
         disabled={loading}
-        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center space-x-2"
+        className="px-6 py-3 bg-chat-accent text-white rounded-lg hover:bg-chat-accent-hover disabled:opacity-50 flex items-center justify-center space-x-3 transition-colors font-medium mx-auto"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24">
           <path

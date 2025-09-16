@@ -8,9 +8,10 @@ from typing import Optional, List, Dict, Any
 import logging
 from datetime import datetime
 
-from app.core.auth import require_authentication
-from app.core.supabase import get_supabase_client
+from app.core.auth import get_current_user
+from app.core.supabase import get_supabase_client_safe, get_supabase_service_client_safe
 from app.services.fantasy.yahoo_service import YahooFantasyService
+from app.services.fantasy.yahoo_oauth_simple import yahoo_oauth
 from app.models.fantasy import FantasyPlatform
 from pydantic import BaseModel
 
@@ -35,11 +36,17 @@ async def get_user_leagues(
     season: int = 2024,
     platform: Optional[str] = None,
     active_only: bool = True,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """Get all fantasy leagues for the authenticated user"""
     try:
-        supabase = get_supabase_client()
+        # Use service role client to bypass RLS for authenticated operations
+        supabase = get_supabase_service_client_safe()
+        if not supabase:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Database service unavailable"
+            )
         
         # Build query
         query = supabase.table("fantasy_leagues").select("*").eq("user_id", current_user["id"])
@@ -58,13 +65,15 @@ async def get_user_leagues(
             logger.info(f"Retrieved {len(response.data)} leagues for user {current_user['id']}")
             return {
                 "success": True,
-                "data": response.data,
+                "leagues": response.data,
+                "data": response.data,  # Keep for backward compatibility
                 "count": len(response.data)
             }
         else:
             return {
                 "success": True,
-                "data": [],
+                "leagues": [],
+                "data": [],  # Keep for backward compatibility
                 "count": 0,
                 "message": "No leagues found for user"
             }
@@ -77,12 +86,62 @@ async def get_user_leagues(
         )
 
 
+@router.post("/")
+async def add_test_league(
+    league_data: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    """Add a test league for development/testing purposes"""
+    try:
+        # Use service role client to bypass RLS for authenticated operations
+        supabase = get_supabase_service_client_safe()
+        if not supabase:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Database service unavailable"
+            )
+        
+        # Create league record
+        insert_data = {
+            "user_id": current_user["id"],
+            "platform": league_data.get("platform", "test"),
+            "league_id": league_data.get("league_id", f"test_{int(datetime.now().timestamp())}"),
+            "league_name": league_data.get("league_name", "Test League"),
+            "season": league_data.get("season", 2024),
+            "is_active": league_data.get("is_active", True),
+            "league_data": league_data.get("league_data", {})
+        }
+        
+        response = supabase.table("fantasy_leagues").insert(insert_data).execute()
+        
+        if response.data:
+            logger.info(f"Added test league {insert_data['league_name']} for user {current_user['id']}")
+            return {
+                "success": True,
+                "league": response.data[0],
+                "data": response.data[0],  # Keep for backward compatibility
+                "message": f"Test league '{insert_data['league_name']}' added successfully"
+            }
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to add test league"
+            )
+            
+    except Exception as e:
+        logger.error(f"Failed to add test league: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to add test league: {str(e)}"
+        )
+
+
 @router.post("/connect/{platform}")
 async def connect_platform_leagues(
     platform: str,
     request: LeagueConnectionRequest,
     season: int = 2024,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """Connect and sync leagues from a fantasy platform"""
     try:
@@ -94,29 +153,67 @@ async def connect_platform_leagues(
                 detail=f"Unsupported platform: {platform}"
             )
         
-        supabase = get_supabase_client()
+        # Use service role client to bypass RLS for authenticated operations
+        supabase = get_supabase_service_client_safe()
+        if not supabase:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Database service unavailable"
+            )
         
         # Initialize platform service
         if platform_lower == 'yahoo':
-            service = YahooFantasyService()
-            
-            # Authenticate with provided tokens or trigger OAuth
-            auth_success = await service.authenticate()
-            if not auth_success:
+            # Check if we have a valid OAuth token from the simple OAuth flow
+            if not yahoo_oauth.has_valid_token():
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Failed to authenticate with Yahoo Fantasy API"
+                    detail="No valid Yahoo OAuth token. Please complete OAuth flow first."
                 )
             
-            # Get user's leagues from Yahoo
-            leagues_response = await service.get_user_leagues(year=season)
-            if not leagues_response.success:
+            # Get user's leagues from Yahoo using direct API call
+            leagues_url = f"https://fantasysports.yahooapis.com/fantasy/v2/users;use_login=1/games;game_keys=nfl/leagues?format=json"
+            result = await yahoo_oauth.make_api_request(leagues_url)
+            
+            if not result["success"]:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Failed to fetch leagues from Yahoo: {leagues_response.error}"
+                    detail=f"Failed to fetch leagues from Yahoo: {result['error']}"
                 )
             
-            leagues_data = leagues_response.data
+            # Parse Yahoo's response to extract leagues
+            leagues_data = []
+            try:
+                yahoo_data = result["data"]
+                users_data = yahoo_data.get("fantasy_content", {}).get("users", {})
+                
+                if "0" in users_data and "user" in users_data["0"]:
+                    user_games = users_data["0"]["user"][1].get("games", {})
+                    if "0" in user_games and "game" in user_games["0"]:
+                        game_leagues = user_games["0"]["game"][1].get("leagues", {})
+                        
+                        for key, league_data in game_leagues.items():
+                            if key.isdigit() and "league" in league_data:
+                                league_info = league_data["league"][0]
+                                
+                                # Create a simplified league object that matches expected structure
+                                league_obj = type('League', (), {
+                                    'platform_id': league_info.get("league_key", ""),
+                                    'name': league_info.get("name", "Unknown League"),
+                                    'total_teams': league_info.get("num_teams", 0),
+                                    'current_week': league_info.get("current_week", 1),
+                                    'scoring_type': 'standard',  # Default
+                                    'teams': [],  # Empty for now
+                                    'metadata': league_info
+                                })()
+                                
+                                leagues_data.append(league_obj)
+                                
+            except Exception as parse_error:
+                logger.error(f"Failed to parse Yahoo leagues response: {parse_error}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to parse Yahoo leagues data"
+                )
             connected_leagues = []
             
             for league in leagues_data:
@@ -243,11 +340,17 @@ async def connect_platform_leagues(
 async def update_league(
     league_db_id: str,
     request: LeagueUpdateRequest,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """Update a user's league settings"""
     try:
-        supabase = get_supabase_client()
+        # Use service role client to bypass RLS for authenticated operations
+        supabase = get_supabase_service_client_safe()
+        if not supabase:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Database service unavailable"
+            )
         
         # Verify league belongs to user
         league_query = supabase.table("fantasy_leagues").select("*").eq(
@@ -305,11 +408,17 @@ async def update_league(
 @router.delete("/{league_db_id}")
 async def delete_league(
     league_db_id: str,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """Remove a league from user's account (soft delete by setting inactive)"""
     try:
-        supabase = get_supabase_client()
+        # Use service role client to bypass RLS for authenticated operations
+        supabase = get_supabase_service_client_safe()
+        if not supabase:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Database service unavailable"
+            )
         
         # Verify league belongs to user
         league_query = supabase.table("fantasy_leagues").select("id").eq(
@@ -348,11 +457,17 @@ async def delete_league(
 @router.post("/{league_db_id}/sync")
 async def sync_league_data(
     league_db_id: str,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """Sync latest data for a specific league from its platform"""
     try:
-        supabase = get_supabase_client()
+        # Use service role client to bypass RLS for authenticated operations
+        supabase = get_supabase_service_client_safe()
+        if not supabase:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Database service unavailable"
+            )
         
         # Get league details
         league_query = supabase.table("fantasy_leagues").select("*").eq(
@@ -451,11 +566,17 @@ async def sync_league_data(
 
 @router.get("/stats")
 async def get_user_league_stats(
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """Get statistics about user's connected leagues"""
     try:
-        supabase = get_supabase_client()
+        # Use service role client to bypass RLS for authenticated operations
+        supabase = get_supabase_service_client_safe()
+        if not supabase:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Database service unavailable"
+            )
         
         # Get all leagues for user
         leagues_query = supabase.table("fantasy_leagues").select("*").eq(

@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     ENCRYPTION_KEY: Optional[str] = None
     
     # Project
-    PROJECT_NAME: str = "Fantasy Recaps API"
+    PROJECT_NAME: str = "StatChat API"
     API_VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
 
@@ -48,7 +48,7 @@ class Settings(BaseSettings):
         "https://iwvbfchhjylrxxywdvue.supabase.co"
     ]
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(extra="ignore")
 
 
 # Global settings instance

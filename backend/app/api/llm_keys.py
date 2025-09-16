@@ -8,7 +8,7 @@ from typing import List, Dict, Any, Optional
 import logging
 from datetime import datetime
 
-from app.core.auth import require_authentication
+from app.core.auth import get_current_user
 from app.services.llm.api_key_service import api_key_service, StoredAPIKey
 from app.models.llm import LLMProvider, ProviderError, AuthenticationError
 from pydantic import BaseModel, Field
@@ -42,7 +42,7 @@ class APIKeyListResponse(BaseModel):
 
 @router.get("/")
 async def list_api_keys(
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ) -> APIKeyListResponse:
     """List all stored API keys for the authenticated user"""
     try:
@@ -81,7 +81,7 @@ async def list_api_keys(
 @router.post("/")
 async def store_api_key(
     request: APIKeyCreateRequest,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """Store a new API key for an LLM provider"""
     try:
@@ -155,7 +155,7 @@ async def store_api_key(
 @router.get("/{provider}")
 async def get_api_key_info(
     provider: str,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """Get information about a stored API key (without revealing the key)"""
     try:
@@ -204,7 +204,7 @@ async def get_api_key_info(
 @router.post("/{provider}/validate")
 async def validate_api_key(
     provider: str,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """Validate a stored API key against the provider"""
     try:
@@ -253,7 +253,7 @@ async def validate_api_key(
 @router.delete("/{provider}")
 async def delete_api_key(
     provider: str,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """Delete a stored API key"""
     try:

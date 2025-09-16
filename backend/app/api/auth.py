@@ -9,7 +9,7 @@ from pydantic import BaseModel, EmailStr
 from supabase import create_client
 
 from app.core.config import settings
-from app.core.auth import get_current_user, require_authentication
+from app.core.auth import get_current_user
 
 router = APIRouter()
 
@@ -49,7 +49,7 @@ def get_supabase_client():
 
 
 @router.get("/status", response_model=AuthStatusResponse)
-async def auth_status(current_user: dict = Depends(require_authentication)):
+async def auth_status(current_user: dict = Depends(get_current_user)):
     """Get current authentication status"""
     return AuthStatusResponse(
         authenticated=True,
@@ -59,7 +59,7 @@ async def auth_status(current_user: dict = Depends(require_authentication)):
 
 
 @router.get("/profile", response_model=UserProfileResponse)
-async def get_user_profile(current_user: dict = Depends(require_authentication)):
+async def get_user_profile(current_user: dict = Depends(get_current_user)):
     """Get current user's profile information"""
     supabase = get_supabase_client()
     user_id = current_user["id"]
@@ -94,7 +94,7 @@ async def get_user_profile(current_user: dict = Depends(require_authentication))
 @router.put("/profile", response_model=UserProfileResponse)
 async def update_user_profile(
     profile_update: UserProfile,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """Update current user's profile information"""
     supabase = get_supabase_client()
@@ -124,7 +124,7 @@ async def update_user_profile(
 
 
 @router.delete("/profile")
-async def delete_user_profile(current_user: dict = Depends(require_authentication)):
+async def delete_user_profile(current_user: dict = Depends(get_current_user)):
     """Delete current user's profile and all associated data"""
     supabase = get_supabase_client()
     user_id = current_user["id"]
@@ -146,7 +146,7 @@ async def delete_user_profile(current_user: dict = Depends(require_authenticatio
 
 
 @router.get("/providers")
-async def get_oauth_providers(current_user: dict = Depends(require_authentication)):
+async def get_oauth_providers(current_user: dict = Depends(get_current_user)):
     """Get user's connected OAuth providers"""
     supabase = get_supabase_client()
     user_id = current_user["id"]

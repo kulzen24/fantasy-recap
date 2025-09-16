@@ -6,9 +6,10 @@ from fastapi import APIRouter, HTTPException, Depends, Request
 from fastapi.responses import HTMLResponse
 from typing import Optional, List
 import logging
+import urllib.parse
 from pydantic import BaseModel
 
-from app.core.auth import require_authentication, optional_authentication
+from app.core.auth import get_current_user, get_current_user_optional
 from app.services.fantasy.yahoo_service import YahooFantasyService
 from app.services.fantasy.yahoo_oauth_simple import yahoo_oauth
 from app.models.fantasy import FantasyApiResponse, League, Team, Matchup
@@ -37,21 +38,65 @@ async def get_auth_page():
 async def get_auth_url():
     """Get Yahoo OAuth2 authorization URL"""
     try:
+        # Clear any existing tokens for fresh start
+        yahoo_oauth._access_token = None
+        yahoo_oauth._refresh_token = None
+        logger.info("🔄 Cleared existing tokens for fresh OAuth attempt")
+        
         auth_url = yahoo_oauth.get_authorization_url()
         return {
             "success": True,
             "auth_url": auth_url,
+            "redirect_uri": yahoo_oauth.redirect_uri,
             "message": "Redirect user to this URL for Yahoo authorization"
         }
     except Exception as e:
         logger.error(f"Failed to generate auth URL: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/debug")
+async def debug_oauth():
+    """Debug endpoint to check OAuth configuration"""
+    return {
+        "redirect_uri": yahoo_oauth.redirect_uri,
+        "redirect_uri_encoded": urllib.parse.quote(yahoo_oauth.redirect_uri, safe=''),
+        "redirect_uri_length": len(yahoo_oauth.redirect_uri),
+        "redirect_uri_bytes": [ord(c) for c in yahoo_oauth.redirect_uri],
+        "client_id": yahoo_oauth.client_id[:10] + "...",
+        "auth_url": yahoo_oauth.auth_url,
+        "token_url": yahoo_oauth.token_url
+    }
+
+@router.post("/test-token-exchange")
+async def test_token_exchange(request: Request):
+    """Test endpoint to simulate token exchange with detailed logging"""
+    body = await request.json()
+    test_code = body.get("code", "test_code_12345")
+    
+    try:
+        # This will trigger our detailed logging
+        result = await yahoo_oauth.exchange_code_for_token(test_code)
+        return {
+            "success": True,
+            "result": result,
+            "redirect_uri_used": yahoo_oauth.redirect_uri
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "redirect_uri_used": yahoo_oauth.redirect_uri
+        }
+
 
 @router.get("/callback")
 async def oauth_callback(request: Request):
     """Handle OAuth callback from Yahoo (GET method for direct browser redirects)"""
     try:
+        # Log incoming request details
+        logger.info(f"🔄 OAuth callback received from {request.client.host if request.client else 'unknown'}")
+        logger.info(f"📝 Query params: {dict(request.query_params)}")
+        
         # Extract code from query parameters
         code = request.query_params.get('code')
         error = request.query_params.get('error')
@@ -66,19 +111,20 @@ async def oauth_callback(request: Request):
         result = await yahoo_oauth.exchange_code_for_token(code)
         
         if result["success"]:
-            # Return success page or redirect to frontend
+            # Return success page - don't send the code since it's already been used
             return HTMLResponse(content=f"""
                 <html>
                     <body>
                         <h2>✅ Yahoo Authorization Successful!</h2>
                         <p>You can now close this window and return to the main application.</p>
-                        <p>Authorization code: <code>{code}</code></p>
+                        <p>Your Yahoo Fantasy leagues are now connected!</p>
                         <script>
                             // Auto-close window if opened in popup
                             if (window.opener) {{
                                 window.opener.postMessage({{
                                     type: 'yahoo_auth_success',
-                                    code: '{code}'
+                                    success: true,
+                                    message: 'Yahoo authentication completed successfully'
                                 }}, '*');
                                 window.close();
                             }}
@@ -132,7 +178,7 @@ async def test_yahoo_connection():
 @router.get("/leagues")
 async def get_user_leagues(
     year: int = 2024,
-    current_user: dict = Depends(optional_authentication)
+    current_user: dict = Depends(get_current_user_optional)
 ):
     """Get all Yahoo Fantasy leagues for the authenticated user"""
     try:
@@ -196,7 +242,7 @@ async def get_user_leagues(
 @router.get("/leagues/{league_id}")
 async def get_league_details(
     league_id: str,
-    current_user: dict = Depends(optional_authentication)
+    current_user: dict = Depends(get_current_user_optional)
 ):
     """Get detailed information for a specific Yahoo Fantasy league"""
     try:
@@ -276,7 +322,7 @@ async def get_league_matchups(
     league_id: str,
     week: int,
     year: int = 2024,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """Get matchups for a specific week in a Yahoo Fantasy league"""
     try:
@@ -303,7 +349,7 @@ async def get_team_roster(
     league_id: str,
     team_id: str,
     week: Optional[int] = None,
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """Get roster for a specific team in a Yahoo Fantasy league"""
     try:
@@ -327,7 +373,7 @@ async def get_team_roster(
 
 @router.post("/authenticate")
 async def initiate_oauth(
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """Initiate Yahoo Fantasy OAuth authentication flow"""
     try:

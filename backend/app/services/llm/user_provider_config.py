@@ -9,7 +9,7 @@ from datetime import datetime
 from dataclasses import dataclass
 
 from app.models.llm import LLMProvider, ProviderConfig
-from app.core.supabase import get_supabase_client
+from app.core.supabase import get_supabase_client_safe
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class UserProviderConfigService:
     """Service for managing user-specific provider configurations"""
     
     def __init__(self):
-        self.supabase = get_supabase_client()
+        self.supabase = get_supabase_client_safe()
     
     async def get_user_preferences(self, user_id: str) -> Optional[UserProviderPreference]:
         """
@@ -42,6 +42,10 @@ class UserProviderConfigService:
         Returns:
             UserProviderPreference or None if not found
         """
+        if not self.supabase:
+            logger.warning("Supabase client not available, returning None for user preferences")
+            return None
+            
         try:
             response = self.supabase.table("user_provider_preferences").select("*").eq("user_id", user_id).execute()
             
@@ -73,6 +77,10 @@ class UserProviderConfigService:
         Returns:
             bool: True if saved successfully
         """
+        if not self.supabase:
+            logger.warning("Supabase client not available, cannot save user preferences")
+            return False
+            
         try:
             data = {
                 "user_id": preferences.user_id,
@@ -106,6 +114,10 @@ class UserProviderConfigService:
         Returns:
             List[LLMProvider]: Available providers for user
         """
+        if not self.supabase:
+            logger.warning("Supabase client not available, returning empty providers list")
+            return []
+            
         try:
             # Query user's API keys
             response = self.supabase.table("user_llm_api_keys").select("provider").eq("user_id", user_id).eq("is_valid", True).execute()

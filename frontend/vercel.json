@@ -1,0 +1,9 @@
+{
+  "name": "statchat-ui",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

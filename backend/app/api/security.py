@@ -8,7 +8,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
-from app.core.auth import require_authentication
+from app.core.auth import get_current_user
 from app.core.security import security_config, validate_api_key_format
 
 logger = logging.getLogger(__name__)
@@ -111,7 +111,7 @@ async def security_health_check():
 
 @router.post("/scan")
 async def trigger_security_scan(
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Trigger a security scan (placeholder for integration with security tools)
@@ -161,7 +161,7 @@ async def trigger_security_scan(
 
 @router.get("/compliance")
 async def get_compliance_status(
-    current_user: dict = Depends(require_authentication)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Get security compliance status against common frameworks

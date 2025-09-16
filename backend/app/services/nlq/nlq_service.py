@@ -6,7 +6,7 @@ Main service for processing StatMuse-like natural language queries
 import uuid
 import logging
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 from app.models.nlq import (
     NLQRequest, NLQResponse, QueryResponse, ParsedQuery,

@@ -13,7 +13,7 @@ from app.models.template import (
     UserTemplate, TemplateStatus, FileFormat, StyleAnalysis, PromptTemplate,
     TemplateUploadRequest, TemplateAnalysisRequest, TemplateListResponse, TemplateAnalysisResponse
 )
-from app.core.supabase import get_supabase_client
+from app.core.supabase import supabase_client
 from .text_processor import text_processor
 from .style_analyzer import style_analyzer
 from .prompt_generator import prompt_generator
@@ -25,7 +25,7 @@ class TemplateService:
     """Main service for template management"""
     
     def __init__(self):
-        self.supabase = get_supabase_client()
+        self.supabase = supabase_client.client
         self.storage_bucket = "user-templates"  # Supabase storage bucket
     
     async def upload_template(
