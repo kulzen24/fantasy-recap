@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import { useTheme } from '../../contexts/ThemeContext'
 import { AuthButton } from '../AuthButton'
 
@@ -36,7 +37,7 @@ export function Header({ onSidebarToggle, sidebarOpen }: HeaderProps) {
           </button>
 
           {/* Logo and App Title */}
-          <div className="flex items-center space-x-2">
+          <Link to="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
             <img 
               src="/official-logo.png" 
               alt="StatChat Logo" 
@@ -45,7 +46,7 @@ export function Header({ onSidebarToggle, sidebarOpen }: HeaderProps) {
             <h1 className="text-xl font-semibold text-chat-text-primary-light dark:text-chat-text-primary-dark">
               StatChat
             </h1>
-          </div>
+          </Link>
         </div>
 
         <div className="flex items-center space-x-3">
