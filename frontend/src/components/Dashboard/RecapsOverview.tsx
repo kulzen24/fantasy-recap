@@ -34,8 +34,14 @@ const RecapsOverview: React.FC = () => {
     console.log('View recap:', recap.id)
   }
 
+  const handleEditRecap = (recap: Recap) => {
+    // Navigate to rich text editor with recap data
+    const editUrl = `/editor?id=${recap.id}&mode=edit`
+    window.location.href = editUrl
+  }
+
   const handleDeleteRecap = async (recapId: string) => {
-    if (!confirm('Are you sure you want to delete this recap? This action cannot be undone.')) {
+    if (!window.confirm('Are you sure you want to delete this recap? This action cannot be undone.')) {
       return
     }
 
@@ -235,6 +241,7 @@ const RecapsOverview: React.FC = () => {
                 key={recap.id}
                 recap={recap}
                 onView={handleViewRecap}
+                onEdit={handleEditRecap}
                 onDelete={handleDeleteRecap}
                 onRegenerate={handleRegenerateRecap}
                 isDeleting={deletingRecapId === recap.id}

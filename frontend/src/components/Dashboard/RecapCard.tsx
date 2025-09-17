@@ -4,6 +4,7 @@ import { Recap } from '../../types/api'
 interface RecapCardProps {
   recap: Recap
   onView: (recap: Recap) => void
+  onEdit?: (recap: Recap) => void
   onDelete: (recapId: string) => void
   onRegenerate: (recapId: string) => void
   isDeleting?: boolean
@@ -13,6 +14,7 @@ interface RecapCardProps {
 const RecapCard: React.FC<RecapCardProps> = ({ 
   recap, 
   onView, 
+  onEdit,
   onDelete, 
   onRegenerate,
   isDeleting = false,
@@ -133,6 +135,18 @@ const RecapCard: React.FC<RecapCardProps> = ({
                 )}
               </button>
               
+              {onEdit && (
+                <button
+                  onClick={() => onEdit(recap)}
+                  className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900 border border-indigo-200 dark:border-indigo-700 rounded hover:bg-indigo-100 dark:hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Edit
+                </button>
+              )}
+
               <button
                 onClick={() => onView(recap)}
                 className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 border border-transparent rounded hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-600"

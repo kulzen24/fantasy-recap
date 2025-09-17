@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 
 interface SidebarProps {
@@ -18,6 +19,7 @@ const mockConversations = [
 
 export function Sidebar({ isOpen, onToggle, currentConversation, onConversationSelect }: SidebarProps) {
   const { user } = useAuth()
+  const location = useLocation()
   const [searchTerm, setSearchTerm] = useState('')
 
   const filteredConversations = mockConversations.filter(conv =>
@@ -42,7 +44,7 @@ export function Sidebar({ isOpen, onToggle, currentConversation, onConversationS
         {/* Sidebar Header */}
         <div className="flex items-center justify-between p-4 border-b border-chat-border-light dark:border-chat-border-dark">
           <h2 className="text-lg font-semibold text-chat-text-primary-light dark:text-chat-text-primary-dark">
-            Recaps
+            History
           </h2>
           <button
             onClick={() => onConversationSelect(null)}
@@ -50,6 +52,39 @@ export function Sidebar({ isOpen, onToggle, currentConversation, onConversationS
           >
             New Recap
           </button>
+        </div>
+
+        {/* Navigation */}
+        <div className="px-4 py-2 border-b border-chat-border-light dark:border-chat-border-dark">
+          <nav className="space-y-1">
+            <Link
+              to="/dashboard"
+              className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                location.pathname === '/dashboard'
+                  ? 'bg-chat-accent text-white'
+                  : 'text-chat-text-primary-light dark:text-chat-text-primary-dark hover:bg-chat-surface-light dark:hover:bg-chat-surface-dark'
+              }`}
+            >
+              <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v0M8 5a2 2 0 012-2h4a2 2 0 012 2v0" />
+              </svg>
+              Dashboard
+            </Link>
+            <Link
+              to="/"
+              className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                location.pathname === '/'
+                  ? 'bg-chat-accent text-white'
+                  : 'text-chat-text-primary-light dark:text-chat-text-primary-dark hover:bg-chat-surface-light dark:hover:bg-chat-surface-dark'
+              }`}
+            >
+              <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              Chat
+            </Link>
+          </nav>
         </div>
 
         {/* Search */}

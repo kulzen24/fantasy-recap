@@ -253,6 +253,8 @@ class SecurityConfig:
             "https://localhost:3000",
             "https://statchat-ui.vercel.app",
             "https://statchat-ashen.vercel.app",
+            "https://statchat-iyszji3sm-kweku-ulzens-projects.vercel.app",
+            "https://statchat-qw0p4e80h-kweku-ulzens-projects.vercel.app",
             "https://*.vercel.app",
             "https://*.netlify.app"
         ]

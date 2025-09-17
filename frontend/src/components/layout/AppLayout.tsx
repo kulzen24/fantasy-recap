@@ -1,14 +1,20 @@
 import React, { useState } from 'react'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { AuthButton } from '../AuthButton'
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
 import { ConversationView } from './ConversationView'
+import DashboardOverview from '../Dashboard/DashboardOverview'
+import RecapEditorPage from '../Dashboard/RecapEditor'
 
 export function AppLayout() {
   const { user } = useAuth()
+  const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [currentConversation, setCurrentConversation] = useState<string | null>(null)
+  
+  const isEditorPage = location.pathname.startsWith('/editor')
 
   if (!user) {
     return (
@@ -24,6 +30,17 @@ export function AppLayout() {
             <AuthButton />
           </div>
         </div>
+      </div>
+    )
+  }
+
+  // For editor page, use full screen layout
+  if (isEditorPage) {
+    return (
+      <div className="min-h-screen">
+        <Routes>
+          <Route path="/editor" element={<RecapEditorPage />} />
+        </Routes>
       </div>
     )
   }
@@ -45,10 +62,15 @@ export function AppLayout() {
           sidebarOpen={sidebarOpen}
         />
         
-        <ConversationView 
-          conversationId={currentConversation}
-          className="flex-1"
-        />
+        <Routes>
+          <Route path="/dashboard" element={<DashboardOverview />} />
+          <Route path="/" element={
+            <ConversationView 
+              conversationId={currentConversation}
+              className="flex-1"
+            />
+          } />
+        </Routes>
       </div>
     </div>
   )
