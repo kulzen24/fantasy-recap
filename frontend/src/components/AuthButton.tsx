@@ -8,32 +8,36 @@ export function AuthButton() {
     return (
       <button 
         disabled 
-        className="px-4 py-2 bg-chat-surface-light dark:bg-chat-surface-dark text-chat-text-secondary-light dark:text-chat-text-secondary-dark rounded-md cursor-not-allowed transition-colors"
+        aria-label="Authentication in progress"
+        className="px-4 py-2 bg-chat-surface-light dark:bg-chat-surface-dark text-chat-text-secondary-light dark:text-chat-text-secondary-dark rounded-md cursor-not-allowed transition-colors min-h-[44px]"
       >
-        Loading...
+        <span aria-live="polite">Loading...</span>
       </button>
     )
   }
 
   if (user) {
     return (
-      <div className="flex items-center space-x-3">
+      <div className="flex items-center space-x-2 sm:space-x-3">
         <div className="flex items-center space-x-2">
           {user.user_metadata?.avatar_url && (
             <img
               src={user.user_metadata.avatar_url}
-              alt="Profile"
+              alt={`${user.user_metadata?.full_name || user.email} profile picture`}
               className="w-8 h-8 rounded-full"
             />
           )}
           <span className="text-sm text-chat-text-primary-light dark:text-chat-text-primary-dark hidden sm:inline">
             {user.user_metadata?.full_name || user.email}
           </span>
+          {/* Mobile signed-in indicator */}
+          <span className="w-2 h-2 bg-green-400 rounded-full sm:hidden" aria-label="Signed in" />
         </div>
         <button
           onClick={signOut}
           disabled={loading}
-          className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 transition-colors text-sm"
+          aria-label="Sign out of your account"
+          className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 transition-colors text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 min-h-[44px]"
         >
           Sign Out
         </button>
@@ -42,18 +46,19 @@ export function AuthButton() {
   }
 
   return (
-    <div className="space-y-2 flex flex-col items-center">
+    <div className="space-y-3 flex flex-col items-center">
       {error && (
-        <div className="text-red-600 text-sm text-center">
+        <div role="alert" className="text-red-600 text-sm text-center px-4 py-2 bg-red-50 dark:bg-red-900 rounded-md border border-red-200 dark:border-red-700">
           {error}
         </div>
       )}
       <button
         onClick={signInWithGoogle}
         disabled={loading}
-        className="px-6 py-3 bg-chat-accent text-white rounded-lg hover:bg-chat-accent-hover disabled:opacity-50 flex items-center justify-center space-x-3 transition-colors font-medium mx-auto"
+        aria-label="Sign in with your Google account"
+        className="px-6 py-3 bg-chat-accent text-white rounded-lg hover:bg-chat-accent-hover disabled:opacity-50 flex items-center justify-center space-x-3 transition-colors font-medium mx-auto focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-chat-accent min-h-[48px]"
       >
-        <svg className="w-5 h-5" viewBox="0 0 24 24">
+        <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
           <path
             fill="currentColor"
             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"

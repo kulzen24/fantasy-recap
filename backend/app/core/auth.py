@@ -14,6 +14,8 @@ from app.core.supabase import get_supabase_client_safe, get_supabase_service_cli
 logger = logging.getLogger(__name__)
 
 security = HTTPBearer()
+# Optional bearer that does not error when Authorization header is missing
+optional_security = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Dict[str, Any]:
@@ -79,7 +81,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         )
 
 
-async def get_current_user_optional(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)) -> Optional[Dict[str, Any]]:
+async def get_current_user_optional(credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_security)) -> Optional[Dict[str, Any]]:
     """
     Get current user from JWT token (optional)
     
