@@ -6,6 +6,7 @@ interface SidebarProps {
   onToggle: () => void
   currentConversation: string | null
   onConversationSelect: (id: string | null) => void
+  'aria-expanded'?: boolean
 }
 
 // Mock data for now - will be replaced with real data from API
@@ -16,7 +17,7 @@ const mockConversations = [
   { id: '4', title: 'Season Outlook', date: '2024-01-12', preview: 'How does my team look for playoffs...' },
 ]
 
-export function Sidebar({ isOpen, onToggle, currentConversation, onConversationSelect }: SidebarProps) {
+export function Sidebar({ isOpen, onToggle, currentConversation, onConversationSelect, ...ariaProps }: SidebarProps) {
   const { user } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -35,18 +36,25 @@ export function Sidebar({ isOpen, onToggle, currentConversation, onConversationS
       <div
         className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
         onClick={onToggle}
+        aria-hidden="true"
       />
 
       {/* Sidebar */}
-      <div className="fixed inset-y-0 left-0 z-50 w-80 bg-chat-sidebar-light dark:bg-chat-sidebar-dark border-r border-chat-border-light dark:border-chat-border-dark flex flex-col lg:relative lg:z-0 animate-slide-in lg:animate-none">
+      <nav 
+        role="navigation" 
+        aria-label="Conversation history"
+        className="fixed inset-y-0 left-0 z-50 w-64 sm:w-80 bg-chat-sidebar-light dark:bg-chat-sidebar-dark border-r border-chat-border-light dark:border-chat-border-dark flex flex-col lg:relative lg:z-0 animate-slide-in lg:animate-none"
+        {...ariaProps}
+      >
         {/* Sidebar Header */}
-        <div className="flex items-center justify-between p-4 border-b border-chat-border-light dark:border-chat-border-dark">
-          <h2 className="text-lg font-semibold text-chat-text-primary-light dark:text-chat-text-primary-dark">
-            Recaps
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border-b border-chat-border-light dark:border-chat-border-dark">
+          <h2 className="text-base sm:text-lg font-semibold text-chat-text-primary-light dark:text-chat-text-primary-dark">
+            History
           </h2>
           <button
             onClick={() => onConversationSelect(null)}
-            className="px-3 py-1.5 text-sm bg-chat-accent hover:bg-chat-accent-hover text-white rounded-md transition-colors"
+            aria-label="Create new recap"
+            className="px-3 py-2 text-sm bg-chat-accent hover:bg-chat-accent-hover text-white rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-chat-accent min-h-[44px]"
           >
             New Recap
           </button>
@@ -60,6 +68,7 @@ export function Sidebar({ isOpen, onToggle, currentConversation, onConversationS
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"
@@ -68,20 +77,22 @@ export function Sidebar({ isOpen, onToggle, currentConversation, onConversationS
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
               />
             </svg>
+            <label htmlFor="search-recaps" className="sr-only">Search recaps</label>
             <input
+              id="search-recaps"
               type="text"
               placeholder="Search recaps..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-chat-surface-light dark:bg-chat-surface-dark border border-chat-border-light dark:border-chat-border-dark rounded-md text-chat-text-primary-light dark:text-chat-text-primary-dark placeholder-chat-text-secondary-light dark:placeholder-chat-text-secondary-dark focus:outline-none focus:ring-2 focus:ring-chat-accent"
+              className="w-full pl-10 pr-4 py-3 text-base sm:text-sm bg-chat-surface-light dark:bg-chat-surface-dark border border-chat-border-light dark:border-chat-border-dark rounded-md text-chat-text-primary-light dark:text-chat-text-primary-dark placeholder-chat-text-secondary-light dark:placeholder-chat-text-secondary-dark focus:outline-none focus:ring-2 focus:ring-chat-accent min-h-[48px]"
             />
           </div>
         </div>
 
         {/* Conversations List */}
-        <div className="flex-1 overflow-y-auto px-2">
+        <div className="flex-1 overflow-y-auto px-2" role="list" aria-label="Recap history">
           {filteredConversations.length === 0 ? (
-            <div className="p-4 text-center text-chat-text-secondary-light dark:text-chat-text-secondary-dark">
+            <div className="p-4 text-center text-chat-text-secondary-light dark:text-chat-text-secondary-dark" aria-live="polite">
               {searchTerm ? 'No matching recaps found' : 'No recaps yet'}
             </div>
           ) : (
@@ -90,11 +101,14 @@ export function Sidebar({ isOpen, onToggle, currentConversation, onConversationS
                 <button
                   key={conversation.id}
                   onClick={() => onConversationSelect(conversation.id)}
-                  className={`w-full text-left p-3 rounded-lg transition-colors ${
+                  aria-current={currentConversation === conversation.id ? 'page' : undefined}
+                  aria-label={`${conversation.title} - ${conversation.preview}`}
+                  className={`w-full text-left p-3 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-chat-accent focus:ring-offset-2 min-h-[48px] ${
                     currentConversation === conversation.id
                       ? 'bg-chat-accent text-white'
                       : 'hover:bg-chat-surface-light dark:hover:bg-chat-surface-dark text-chat-text-primary-light dark:text-chat-text-primary-dark'
                   }`}
+                  role="listitem"
                 >
                   <div className="font-medium text-sm truncate">
                     {conversation.title}
@@ -106,13 +120,16 @@ export function Sidebar({ isOpen, onToggle, currentConversation, onConversationS
                   }`}>
                     {conversation.preview}
                   </div>
-                  <div className={`text-xs mt-1 ${
-                    currentConversation === conversation.id
-                      ? 'text-white/60'
-                      : 'text-chat-text-secondary-light dark:text-chat-text-secondary-dark'
-                  }`}>
+                  <time 
+                    dateTime={conversation.date}
+                    className={`text-xs mt-1 block ${
+                      currentConversation === conversation.id
+                        ? 'text-white/60'
+                        : 'text-chat-text-secondary-light dark:text-chat-text-secondary-dark'
+                    }`}
+                  >
                     {new Date(conversation.date).toLocaleDateString()}
-                  </div>
+                  </time>
                 </button>
               ))}
             </div>
@@ -120,12 +137,12 @@ export function Sidebar({ isOpen, onToggle, currentConversation, onConversationS
         </div>
 
         {/* Sidebar Footer */}
-        <div className="p-4 border-t border-chat-border-light dark:border-chat-border-dark">
+        <footer className="p-4 border-t border-chat-border-light dark:border-chat-border-dark">
           <div className="flex items-center space-x-3">
             {user?.user_metadata?.avatar_url && (
               <img
                 src={user.user_metadata.avatar_url}
-                alt="Profile"
+                alt={`${user?.user_metadata?.full_name || user?.email} profile picture`}
                 className="w-8 h-8 rounded-full"
               />
             )}
@@ -133,10 +150,13 @@ export function Sidebar({ isOpen, onToggle, currentConversation, onConversationS
               <div className="text-sm font-medium text-chat-text-primary-light dark:text-chat-text-primary-dark truncate">
                 {user?.user_metadata?.full_name || user?.email}
               </div>
+              <div className="text-xs text-chat-text-secondary-light dark:text-chat-text-secondary-dark">
+                Signed in
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </footer>
+      </nav>
     </>
   )
 }

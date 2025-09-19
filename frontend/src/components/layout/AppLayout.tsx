@@ -13,29 +13,38 @@ export function AppLayout() {
   if (!user) {
     return (
       <div className="min-h-screen bg-chat-bg-light dark:bg-chat-bg-dark flex items-center justify-center">
-        <div className="text-center space-y-6 p-8">
-          <h1 className="text-4xl font-bold text-chat-text-primary-light dark:text-chat-text-primary-dark">
+        <main className="text-center space-y-6 p-8">
+          <h1 className="text-3xl sm:text-4xl font-bold text-chat-text-primary-light dark:text-chat-text-primary-dark">
             StatChat
           </h1>
-          <p className="text-chat-text-secondary-light dark:text-chat-text-secondary-dark text-lg max-w-md">
+          <p className="text-chat-text-secondary-light dark:text-chat-text-secondary-dark text-base sm:text-lg max-w-md mx-auto">
             Generate AI-powered recaps for your fantasy leagues
           </p>
           <div className="pt-4">
             <AuthButton />
           </div>
-        </div>
+        </main>
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-chat-bg-light dark:bg-chat-bg-dark flex">
+      {/* Skip navigation link */}
+      <a 
+        href="#main-content" 
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 z-50 bg-chat-accent text-white px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-chat-accent"
+      >
+        Skip to main content
+      </a>
+      
       {/* Sidebar */}
       <Sidebar 
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
         currentConversation={currentConversation}
         onConversationSelect={setCurrentConversation}
+        aria-expanded={sidebarOpen}
       />
       
       {/* Main Content */}
@@ -45,10 +54,12 @@ export function AppLayout() {
           sidebarOpen={sidebarOpen}
         />
         
-        <ConversationView 
-          conversationId={currentConversation}
-          className="flex-1"
-        />
+        <main id="main-content" className="flex-1">
+          <ConversationView 
+            conversationId={currentConversation}
+            className="h-full"
+          />
+        </main>
       </div>
     </div>
   )
