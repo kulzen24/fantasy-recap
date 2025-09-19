@@ -34,6 +34,7 @@ from app.api.provider_preferences import router as provider_preferences_router
 from app.api.security import router as security_router
 from app.api.templates import router as templates_router
 from app.api.recaps import router as recaps_router
+from app.api.awards import router as awards_router
 
 
 # Create FastAPI app
@@ -97,6 +98,7 @@ app.include_router(provider_preferences_router, prefix=f"{settings.API_V1_STR}/p
 app.include_router(security_router, prefix=f"{settings.API_V1_STR}/security", tags=["security", "monitoring"])
 app.include_router(templates_router, prefix=f"{settings.API_V1_STR}/templates", tags=["templates", "style-analysis"])
 app.include_router(recaps_router, prefix=f"{settings.API_V1_STR}/recaps", tags=["recaps", "generation"])
+app.include_router(awards_router, prefix=f"{settings.API_V1_STR}/awards", tags=["awards", "weekly-awards"])
 
 @app.get("/")
 async def root():

@@ -256,3 +256,19 @@ export function useSetDefaultTemplate() {
 export function useDeleteTemplate() {
   return useApiMutation<APIResponse<void>, {}>()
 }
+
+// Recap editing hooks
+export function useUpdateRecap() {
+  return useApiMutation<Recap>()
+}
+
+export function useCreateRecap() {
+  return useApiMutation<Recap>()
+}
+
+export function useGetRecap(recapId: string) {
+  return useApi<Recap>(`/recaps/${recapId}`, {
+    immediate: !!recapId,
+    deps: [recapId]
+  })
+}
