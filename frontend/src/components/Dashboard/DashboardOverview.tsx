@@ -3,8 +3,9 @@ import { useAuth } from '../../contexts/AuthContext'
 import LeagueOverview from './LeagueOverview'
 import RecapsOverview from './RecapsOverview'
 import QuickActions from './QuickActions'
+import { AwardList } from '../Awards'
 
-type DashboardTab = 'overview' | 'leagues' | 'recaps'
+type DashboardTab = 'overview' | 'leagues' | 'recaps' | 'awards'
 
 const DashboardOverview: React.FC = () => {
   const { user } = useAuth()
@@ -14,6 +15,7 @@ const DashboardOverview: React.FC = () => {
     { id: 'overview' as const, label: 'Overview', icon: '🏠' },
     { id: 'leagues' as const, label: 'Leagues', icon: '🏈' },
     { id: 'recaps' as const, label: 'Recaps', icon: '📝' },
+    { id: 'awards' as const, label: 'Awards', icon: '🏆' },
   ]
 
   if (!user) {
@@ -185,6 +187,7 @@ const DashboardOverview: React.FC = () => {
 
           {activeTab === 'leagues' && <LeagueOverview />}
           {activeTab === 'recaps' && <RecapsOverview />}
+          {activeTab === 'awards' && <AwardList />}
         </div>
       </div>
     </div>

@@ -6,6 +6,9 @@ export interface APIResponse<T> {
   error?: string
 }
 
+// Re-export award types
+export * from './award';
+
 export interface PaginatedResponse<T> extends APIResponse<T[]> {
   count: number
   has_more?: boolean
