@@ -495,7 +495,7 @@ function WinnerCard({ winner, award, onEdit, onDelete, isDeleting }: WinnerCardP
           <div className="flex flex-wrap gap-2">
             {Object.entries(winner.stats).map(([key, value]) => (
               <span key={key} className="text-xs bg-gray-100 dark:bg-gray-600 px-2 py-1 rounded">
-                {key}: {typeof value === 'number' ? value.toFixed(1) : value}
+                {key}: {typeof value === 'number' ? (value || 0).toFixed(1) : value}
               </span>
             ))}
           </div>

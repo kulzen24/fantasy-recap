@@ -132,7 +132,7 @@ const RecapsOverview: React.FC = () => {
             {totalRecaps} {totalRecaps === 1 ? 'recap' : 'recaps'} generated
             {stats && !statsLoading && (
               <span className="ml-2">
-                • Avg quality: <span aria-label={`Quality score ${stats.avg_quality_score.toFixed(1)} out of 5 stars`}>{stats.avg_quality_score.toFixed(1)}⭐</span>
+                • Avg quality: <span aria-label={`Quality score ${(stats.avg_quality_score || 0).toFixed(1)} out of 5 stars`}>{(stats.avg_quality_score || 0).toFixed(1)}⭐</span>
               </span>
             )}
           </p>
@@ -173,8 +173,8 @@ const RecapsOverview: React.FC = () => {
                 <div className="flex-1">
                   <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Avg Quality</dt>
                   <dd className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-white">
-                    <span aria-label={`Average quality score ${stats.avg_quality_score.toFixed(1)} out of 5 stars`}>
-                      {stats.avg_quality_score.toFixed(1)}⭐
+                    <span aria-label={`Average quality score ${(stats.avg_quality_score || 0).toFixed(1)} out of 5 stars`}>
+                      {(stats.avg_quality_score || 0).toFixed(1)}⭐
                     </span>
                   </dd>
                 </div>

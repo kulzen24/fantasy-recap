@@ -350,7 +350,7 @@ export function YahooRecapGenerator({ leagueId, className = '' }: YahooRecapGene
               🏆 Generated Recap
             </h4>
             <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-              <span>Quality: {(generatedRecap.quality_score * 100).toFixed(0)}%</span>
+              <span>Quality: {((generatedRecap.quality_score || 0) * 100).toFixed(0)}%</span>
               <span>Generated in {generatedRecap.processing_time}ms</span>
             </div>
           </div>
