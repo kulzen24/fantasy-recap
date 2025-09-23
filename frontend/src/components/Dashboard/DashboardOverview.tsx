@@ -4,18 +4,21 @@ import LeagueOverview from './LeagueOverview'
 import RecapsOverview from './RecapsOverview'
 import QuickActions from './QuickActions'
 import { AwardList } from '../Awards'
+import { NLQChat } from '../NLQ'
 
-type DashboardTab = 'overview' | 'leagues' | 'recaps' | 'awards'
+type DashboardTab = 'overview' | 'leagues' | 'recaps' | 'awards' | 'nlq'
 
 const DashboardOverview: React.FC = () => {
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState<DashboardTab>('overview')
+  const [selectedLeagueId, setSelectedLeagueId] = useState<string>('')
 
   const tabs = [
     { id: 'overview' as const, label: 'Overview', icon: '🏠' },
     { id: 'leagues' as const, label: 'Leagues', icon: '🏈' },
     { id: 'recaps' as const, label: 'Recaps', icon: '📝' },
     { id: 'awards' as const, label: 'Awards', icon: '🏆' },
+    { id: 'nlq' as const, label: 'Ask AI', icon: '🤖' },
   ]
 
   if (!user) {
@@ -188,6 +191,85 @@ const DashboardOverview: React.FC = () => {
           {activeTab === 'leagues' && <LeagueOverview />}
           {activeTab === 'recaps' && <RecapsOverview />}
           {activeTab === 'awards' && <AwardList />}
+          {activeTab === 'nlq' && (
+            <div className="space-y-6">
+              {/* League Selection for NLQ */}
+              {!selectedLeagueId && (
+                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    Select a League to Ask Questions
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    Choose which league you'd like to ask questions about. You can ask about player performance, team stats, league standings, and more!
+                  </p>
+                  <div className="space-y-2">
+                    {/* Mock league selection - in real app this would come from LeagueOverview */}
+                    <button
+                      onClick={() => setSelectedLeagueId('mock-league-1')}
+                      className="w-full text-left p-4 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium text-gray-900 dark:text-white">
+                            My Fantasy League 2024
+                          </h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            12 teams • Week 12 • Yahoo Fantasy
+                          </p>
+                        </div>
+                        <div className="text-indigo-600 dark:text-indigo-400">
+                          Select →
+                        </div>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setSelectedLeagueId('mock-league-2')}
+                      className="w-full text-left p-4 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium text-gray-900 dark:text-white">
+                            Work League Championship
+                          </h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            10 teams • Week 12 • ESPN Fantasy
+                          </p>
+                        </div>
+                        <div className="text-indigo-600 dark:text-indigo-400">
+                          Select →
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {/* NLQ Chat Interface */}
+              {selectedLeagueId && (
+                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-600">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Fantasy Assistant
+                      </h3>
+                      <button
+                        onClick={() => setSelectedLeagueId('')}
+                        className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                      >
+                        Change League
+                      </button>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      Ask me anything about your fantasy league!
+                    </p>
+                  </div>
+                  <div className="h-[600px]">
+                    <NLQChat leagueId={selectedLeagueId} className="h-full border-0" />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
