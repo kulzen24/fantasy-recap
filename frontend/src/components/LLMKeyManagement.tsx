@@ -80,8 +80,12 @@ export function LLMKeyManagement() {
         setError(errorData.detail || 'Failed to fetch API keys');
       }
     } catch (err) {
-      setError('Error fetching API keys');
-      console.error('Error:', err);
+      setError(`Error fetching API keys: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      console.error('Fetch API keys error:', err);
+      console.error('Request details:', {
+        url: `${API_CONFIG.BASE_URL}/api/v1/llm-keys/`,
+        hasToken: !!session?.access_token
+      });
     } finally {
       setLoading(false);
     }
@@ -122,8 +126,13 @@ export function LLMKeyManagement() {
         setError(data.detail || 'Failed to add API key');
       }
     } catch (err) {
-      setError('Error adding API key');
-      console.error('Error:', err);
+      setError(`Error adding API key: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      console.error('Full error details:', err);
+      console.error('Request details:', {
+        url: `${API_CONFIG.BASE_URL}/api/v1/llm-keys/`,
+        provider,
+        hasToken: !!session?.access_token
+      });
     } finally {
       setLoading(false);
     }
@@ -244,6 +253,15 @@ export function LLMKeyManagement() {
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           LLM API Key Management
         </h3>
+        
+        {/* Debug Info Panel */}
+        <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded border text-xs">
+          <strong>Debug Info:</strong>
+          <div>API URL: {API_CONFIG.BASE_URL}</div>
+          <div>Authenticated: {user ? 'Yes' : 'No'}</div>
+          <div>Session Token: {session?.access_token ? 'Present' : 'Missing'}</div>
+          <div>Current Keys: {apiKeys.length}</div>
+        </div>
         
         <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
           <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
