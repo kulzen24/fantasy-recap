@@ -5,6 +5,7 @@ Main service for processing StatMuse-like natural language queries
 
 import uuid
 import logging
+import time
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 
@@ -17,6 +18,7 @@ from app.services.nlq.query_parser import QueryParser
 from app.services.nlq.analytics_service import FantasyAnalyticsService
 from app.services.llm.provider_manager import LLMProviderManager
 from app.services.fantasy.base_service import BaseFantasyService
+from app.monitoring.nlq_monitor import record_query_execution
 
 logger = logging.getLogger(__name__)
 
@@ -49,8 +51,11 @@ class NaturalLanguageQueryService:
         Returns:
             NLQResponse with answer and supporting data
         """
-        start_time = datetime.utcnow()
+        start_time = time.time()
         query_id = str(uuid.uuid4())
+        success = False
+        error_message = None
+        parsed_query = None
         
         try:
             logger.info(f"Processing NLQ: '{request.query}' for user {user_id}")
@@ -79,7 +84,7 @@ class NaturalLanguageQueryService:
                 natural_answer = "I'm sorry, I couldn't analyze your query due to a data issue. Please try again."
             
             # Step 4: Calculate response time
-            response_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+            response_time = (time.time() - start_time) * 1000
             
             # Step 5: Build query response
             query_response = QueryResponse(
@@ -101,6 +106,20 @@ class NaturalLanguageQueryService:
             
             # Step 7: Log analytics
             await self._log_query_analytics(query_response, user_id)
+            
+            success = True
+            
+            # Record metrics for monitoring
+            record_query_execution(
+                query_id=query_id,
+                user_id=user_id,
+                league_id=request.league_id,
+                query_type=parsed_query.query_type.value,
+                intent=parsed_query.intent.value,
+                confidence=parsed_query.confidence,
+                response_time_ms=int(response_time),
+                success=True
+            )
             
             return NLQResponse(
                 success=True,
