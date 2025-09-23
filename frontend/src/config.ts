@@ -1,9 +1,9 @@
 // API Configuration
 export const API_CONFIG = {
-  // TEMPORARY: Use working backend deployment until static URL is updated
+  // Use environment variable if available, otherwise fallback to static Vercel URL in production
   BASE_URL: process.env.REACT_APP_API_BASE_URL || (
     process.env.NODE_ENV === 'production' 
-      ? 'https://statchat-4m9blnewh-kweku-ulzens-projects.vercel.app'
+      ? 'https://statchat-ashen.vercel.app'
       : 'http://localhost:8000'
   )
 };
