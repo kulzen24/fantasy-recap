@@ -255,6 +255,7 @@ class SecurityConfig:
             "https://statchat-ashen.vercel.app",
             "https://statchat-iyszji3sm-kweku-ulzens-projects.vercel.app",
             "https://statchat-qw0p4e80h-kweku-ulzens-projects.vercel.app",
+            "https://statchat-199t4rhay-kweku-ulzens-projects.vercel.app",  # Latest frontend deployment
             "https://*.vercel.app",
             "https://*.netlify.app"
         ]
