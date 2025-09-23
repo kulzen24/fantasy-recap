@@ -13,6 +13,7 @@ import {
   League
 } from '../../types/api'
 import { useAssignAwardWinner } from '../../hooks/useAwards'
+import { YahooPlayerSelector, SelectedPlayer } from './YahooPlayerSelector'
 
 interface AwardWinnerFormProps {
   award: Award
@@ -193,10 +194,41 @@ export function AwardWinnerForm({
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Winner Selection */}
+        {/* Yahoo Player Selector */}
+        {league?.platform === 'yahoo' && (
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              🏈 Select from Yahoo League Data
+            </label>
+            <YahooPlayerSelector
+              leagueId={league.league_id}
+              week={week}
+              season={season}
+              awardCriteria={String(award.criteria || award.description || '')}
+              onPlayerSelect={(player: SelectedPlayer) => {
+                const winnerCandidate: WinnerCandidate = {
+                  id: player.id,
+                  name: player.name,
+                  type: player.type,
+                  platform: player.platform,
+                  stats: player.stats,
+                  teamName: player.teamName,
+                  position: player.position
+                }
+                setSelectedWinner(winnerCandidate)
+                if (player.reason) {
+                  setReason(player.reason)
+                }
+              }}
+              className="border border-gray-200 dark:border-gray-600 rounded-lg p-4"
+            />
+          </div>
+        )}
+
+        {/* Manual Winner Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-            Select Winner *
+            Select Winner Manually *
           </label>
           
           {/* Search and Filter */}

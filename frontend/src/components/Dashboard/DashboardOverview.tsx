@@ -5,8 +5,10 @@ import RecapsOverview from './RecapsOverview'
 import QuickActions from './QuickActions'
 import { AwardList } from '../Awards'
 import { NLQChat } from '../NLQ'
+import { YahooLeagueConnection } from '../YahooLeagueConnection'
+import { LLMKeyManagement } from '../LLMKeyManagement'
 
-type DashboardTab = 'overview' | 'leagues' | 'recaps' | 'awards' | 'nlq'
+type DashboardTab = 'overview' | 'leagues' | 'recaps' | 'awards' | 'nlq' | 'settings'
 
 const DashboardOverview: React.FC = () => {
   const { user } = useAuth()
@@ -19,6 +21,7 @@ const DashboardOverview: React.FC = () => {
     { id: 'recaps' as const, label: 'Recaps', icon: '📝' },
     { id: 'awards' as const, label: 'Awards', icon: '🏆' },
     { id: 'nlq' as const, label: 'Ask AI', icon: '🤖' },
+    { id: 'settings' as const, label: 'Settings', icon: '⚙️' },
   ]
 
   if (!user) {
@@ -268,6 +271,41 @@ const DashboardOverview: React.FC = () => {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === 'settings' && (
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+                  ⚙️ Account Settings
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  Manage your fantasy league connections and AI provider settings.
+                </p>
+                
+                <div className="grid gap-8 lg:grid-cols-2">
+                  {/* League Management */}
+                  <div>
+                    <h4 className="text-md font-medium text-gray-900 dark:text-white mb-4 flex items-center">
+                      🏈 League Connections
+                    </h4>
+                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                      <YahooLeagueConnection />
+                    </div>
+                  </div>
+
+                  {/* LLM Key Management */}
+                  <div>
+                    <h4 className="text-md font-medium text-gray-900 dark:text-white mb-4 flex items-center">
+                      🔑 AI Provider Keys
+                    </h4>
+                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                      <LLMKeyManagement />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
