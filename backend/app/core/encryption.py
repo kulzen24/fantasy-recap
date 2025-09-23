@@ -44,8 +44,10 @@ class EncryptionService:
                 logger.warning(f"Invalid encryption key in environment: {e}")
         
         # For development, use a derived key from settings
-        if hasattr(settings, 'SECRET_KEY') and settings.SECRET_KEY:
-            return self._derive_key_from_secret(settings.SECRET_KEY)
+        if hasattr(settings, 'JWT_SECRET') and settings.JWT_SECRET:
+            return self._derive_key_from_secret(settings.JWT_SECRET)
+        elif hasattr(settings, 'ENCRYPTION_KEY') and settings.ENCRYPTION_KEY:
+            return self._derive_key_from_secret(settings.ENCRYPTION_KEY)
         
         # Fallback: generate a new key (not recommended for production)
         logger.warning("No encryption key found, generating new key. This should not happen in production!")
