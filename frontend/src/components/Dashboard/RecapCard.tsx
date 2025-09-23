@@ -87,9 +87,9 @@ const RecapCard: React.FC<RecapCardProps> = ({
             {recap.quality_score && (
               <span 
                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getQualityColor(recap.quality_score)}`}
-                aria-label={`Quality score: ${recap.quality_score.toFixed(1)} out of 5 stars`}
+                aria-label={`Quality score: ${(recap.quality_score || 0).toFixed(1)} out of 5 stars`}
               >
-                ⭐ {recap.quality_score.toFixed(1)}
+                ⭐ {(recap.quality_score || 0).toFixed(1)}
               </span>
             )}
           </div>

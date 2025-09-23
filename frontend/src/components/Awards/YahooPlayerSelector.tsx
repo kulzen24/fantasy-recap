@@ -364,7 +364,7 @@ export function YahooPlayerSelector({
                     {team.name}
                   </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Owner: {team.owner_name} • {team.wins}-{team.losses} • {team.points_for.toFixed(1)} PF
+                    Owner: {team.owner_name} • {team.wins}-{team.losses} • {(team.points_for || 0).toFixed(1)} PF
                   </p>
                 </div>
                 <button

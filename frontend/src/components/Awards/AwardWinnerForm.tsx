@@ -299,8 +299,8 @@ export function AwardWinnerForm({
                       {candidate.stats && (
                         <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           {candidate.type === 'team' 
-                            ? `${candidate.stats.wins || 0}-${candidate.stats.losses || 0} • ${candidate.stats.points_for?.toFixed(1) || 0} pts`
-                            : `${candidate.stats.actual_points?.toFixed(1) || 0} pts`
+                            ? `${candidate.stats.wins || 0}-${candidate.stats.losses || 0} • ${(candidate.stats.points_for || 0).toFixed(1)} pts`
+                            : `${(candidate.stats.actual_points || 0).toFixed(1)} pts`
                           }
                         </div>
                       )}
