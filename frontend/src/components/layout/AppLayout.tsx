@@ -6,7 +6,7 @@ import { Sidebar } from './Sidebar'
 import { Header } from './Header'
 import { ConversationView } from './ConversationView'
 import DashboardOverview from '../Dashboard/DashboardOverview'
-import RecapEditorPage from '../Dashboard/RecapEditor'
+import RecapEditorPage from '../Dashboard/RecapEditorPage'
 
 export function AppLayout() {
   const { user } = useAuth()

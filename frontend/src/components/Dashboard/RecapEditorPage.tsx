@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useUpdateRecap, useCreateRecap } from '../../hooks/useDashboardData'
 import { Recap } from '../../types/api'
-import RecapEditor from '../RecapEditor/RecapEditor'
+import { RecapEditor } from '../RecapEditor'
 
 interface RecapEditorPageProps {
   recap?: Recap

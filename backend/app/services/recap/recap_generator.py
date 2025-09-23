@@ -15,6 +15,7 @@ from app.models.recap import (
 from app.models.fantasy import League, Matchup
 from app.models.template import PromptTemplate
 from app.models.llm import LLMRequest, RecapTone, RecapLength
+from app.models.award import Award, AwardWinner
 
 from app.services.recap.insight_analyzer import insight_analyzer
 from app.services.template.template_service import template_service
@@ -64,6 +65,11 @@ class RecapGenerator:
             league_data = await self._fetch_league_data(request.league_id)
             matchups = await self._fetch_week_matchups(request.league_id, request.week, request.season)
             
+            # Step 2.5: Fetch awards data if requested
+            awards_data = None
+            if request.include_awards:
+                awards_data = await self._fetch_week_awards(request.user_id, request.league_id, request.week, request.season)
+            
             # Step 3: Analyze data and extract insights
             processing_steps.append("insight_analysis")
             insights = await self._analyze_league_data(
@@ -79,7 +85,7 @@ class RecapGenerator:
             # Step 5: Construct LLM prompt
             processing_steps.append("prompt_construction")
             llm_prompt = await self._construct_llm_prompt(
-                insights, request, user_template, league_data, matchups
+                insights, request, user_template, league_data, matchups, awards_data
             )
             
             # Step 6: Generate recap with LLM
@@ -224,6 +230,47 @@ class RecapGenerator:
             # Additional mock matchups would be added here
         ]
     
+    async def _fetch_week_awards(self, user_id: str, league_id: str, week: int, season: int) -> Optional[Dict[str, Any]]:
+        """Fetch awards data for the specified week"""
+        try:
+            # Fetch awards for this league and user
+            awards_response = self.supabase.table("weekly_awards").select(
+                "*, award_winners(*)"
+            ).eq(
+                "user_id", user_id
+            ).eq(
+                "league_id", league_id
+            ).eq(
+                "status", "active"
+            ).execute()
+            
+            if not awards_response.data:
+                return None
+            
+            # Fetch award winners for this specific week
+            winners_response = self.supabase.table("award_winners").select(
+                "*, weekly_awards(name, emoji, description)"
+            ).eq(
+                "week", week
+            ).eq(
+                "season", season
+            ).execute()
+            
+            # Organize the data
+            awards_data = {
+                "available_awards": awards_response.data,
+                "week_winners": winners_response.data if winners_response.data else [],
+                "awards_count": len(awards_response.data),
+                "winners_count": len(winners_response.data) if winners_response.data else 0
+            }
+            
+            logger.info(f"Fetched {awards_data['awards_count']} awards and {awards_data['winners_count']} winners for week {week}")
+            return awards_data
+            
+        except Exception as e:
+            logger.warning(f"Failed to fetch awards data: {e}")
+            return None
+    
     async def _analyze_league_data(
         self, 
         league: League, 
@@ -251,7 +298,8 @@ class RecapGenerator:
         request: RecapGenerationRequest,
         user_template: Optional[PromptTemplate],
         league: League,
-        matchups: List[Matchup]
+        matchups: List[Matchup],
+        awards_data: Optional[Dict[str, Any]] = None
     ) -> str:
         """Construct the LLM prompt for recap generation"""
         
@@ -270,7 +318,8 @@ class RecapGenerator:
                     "lowest_score": insights.lowest_score,
                     "closest_margin": insights.closest_margin,
                     "biggest_blowout": insights.biggest_blowout
-                }
+                },
+                "awards": awards_data if awards_data else {}
             }
             
             return prompt_generator.generate_recap_prompt(
@@ -279,14 +328,15 @@ class RecapGenerator:
         
         else:
             # Use default prompt template
-            return self._generate_default_prompt(insights, request, league, matchups)
+            return self._generate_default_prompt(insights, request, league, matchups, awards_data)
     
     def _generate_default_prompt(
         self,
         insights: WeeklyInsights,
         request: RecapGenerationRequest,
         league: League,
-        matchups: List[Matchup]
+        matchups: List[Matchup],
+        awards_data: Optional[Dict[str, Any]] = None
     ) -> str:
         """Generate a default prompt when no user template is available"""
         
@@ -342,10 +392,35 @@ class RecapGenerator:
                 loser_score = min(matchup.home_score, matchup.away_score)
                 prompt_parts.append(f"- {winner} defeated {loser} {winner_score:.1f} - {loser_score:.1f}")
         
+        # Add awards section if available
+        if awards_data and awards_data.get("week_winners"):
+            prompt_parts.extend([
+                "",
+                "WEEKLY AWARDS:",
+            ])
+            
+            for winner in awards_data["week_winners"]:
+                award_info = winner.get("weekly_awards", {})
+                emoji = award_info.get("emoji", "🏆")
+                award_name = award_info.get("name", "Award")
+                winner_name = winner.get("winner_name", "Unknown")
+                reason = winner.get("reason", "")
+                
+                award_line = f"- {emoji} {award_name}: {winner_name}"
+                if reason:
+                    award_line += f" - {reason}"
+                prompt_parts.append(award_line)
+        
         prompt_parts.extend([
             "",
             f"Write an engaging fantasy football recap for Week {request.week} that incorporates the key insights and matchup results above. Focus on telling the story of the week with specific details about performances and outcomes."
         ])
+        
+        # Add awards instruction if awards are included
+        if awards_data and awards_data.get("week_winners"):
+            prompt_parts.append("Include a dedicated section highlighting the weekly awards and their winners, celebrating their achievements.")
+        
+        prompt_parts.append("Make the recap compelling and entertaining while remaining factual and informative.")
         
         return "\n".join(prompt_parts)
     

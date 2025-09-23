@@ -6,6 +6,58 @@ export interface APIResponse<T> {
   error?: string
 }
 
+// Re-export award types
+export * from './award';
+
+// Fantasy Platform Types
+export type FantasyPlatform = 'yahoo' | 'espn' | 'sleeper'
+export type PlayerPosition = 'QB' | 'RB' | 'WR' | 'TE' | 'K' | 'DEF' | 'FLEX' | 'BENCH' | 'IR'
+export type MatchupStatus = 'preview' | 'in_progress' | 'completed'
+
+export interface Player {
+  id: string
+  platform_id: string
+  platform: FantasyPlatform
+  name: string
+  position: PlayerPosition
+  team?: string // NFL team
+  bye_week?: number
+  projected_points?: number
+  actual_points?: number
+  injury_status?: string
+  metadata?: Record<string, any>
+}
+
+export interface Team {
+  id: string
+  platform_id: string
+  platform: FantasyPlatform
+  name: string
+  owner_name?: string
+  wins: number
+  losses: number
+  ties: number
+  points_for: number
+  points_against: number
+  roster: Player[]
+  metadata?: Record<string, any>
+}
+
+export interface Matchup {
+  id: string
+  platform: FantasyPlatform
+  week: number
+  year: number
+  team1: Team
+  team2: Team
+  team1_score?: number
+  team2_score?: number
+  status: MatchupStatus
+  start_time?: string
+  end_time?: string
+  metadata?: Record<string, any>
+}
+
 export interface PaginatedResponse<T> extends APIResponse<T[]> {
   count: number
   has_more?: boolean
