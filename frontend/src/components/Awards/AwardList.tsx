@@ -7,6 +7,7 @@ import React, { useState } from 'react'
 import { Award, AwardStatus, AwardFrequency } from '../../types/award'
 import { useAwards, useDeleteAward, useAwardStats } from '../../hooks/useAwards'
 import { AwardForm } from './AwardForm'
+import { AwardWinnersList } from './AwardWinnersList'
 
 interface AwardListProps {
   leagueId?: string
@@ -35,6 +36,7 @@ export function AwardList({ leagueId, onEditAward, onCreateAward, className = ''
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingAward, setEditingAward] = useState<Award | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [managingWinnersAward, setManagingWinnersAward] = useState<Award | null>(null)
   
   // Filter awards
   const filteredAwards = awards.filter(award => {
@@ -92,6 +94,16 @@ export function AwardList({ leagueId, onEditAward, onCreateAward, className = ''
         award={editingAward}
         onSuccess={handleEditSuccess}
         onCancel={() => setEditingAward(null)}
+        className={className}
+      />
+    )
+  }
+
+  if (managingWinnersAward) {
+    return (
+      <AwardWinnersList
+        award={managingWinnersAward}
+        onCancel={() => setManagingWinnersAward(null)}
         className={className}
       />
     )
@@ -291,6 +303,7 @@ export function AwardList({ leagueId, onEditAward, onCreateAward, className = ''
                 award={award}
                 onEdit={() => handleEdit(award)}
                 onDelete={() => setConfirmDelete(award.id)}
+                onManageWinners={() => setManagingWinnersAward(award)}
                 isDeleting={deleteAward.isPending}
               />
             ))}
@@ -340,10 +353,11 @@ interface AwardCardProps {
   award: Award
   onEdit: () => void
   onDelete: () => void
+  onManageWinners: () => void
   isDeleting: boolean
 }
 
-function AwardCard({ award, onEdit, onDelete, isDeleting }: AwardCardProps) {
+function AwardCard({ award, onEdit, onDelete, onManageWinners, isDeleting }: AwardCardProps) {
   const getStatusColor = (status: AwardStatus) => {
     switch (status) {
       case 'active': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
@@ -422,7 +436,7 @@ function AwardCard({ award, onEdit, onDelete, isDeleting }: AwardCardProps) {
       </div>
       
       {/* Stats */}
-      <div className="flex items-center justify-between text-sm">
+      <div className="flex items-center justify-between text-sm mb-4">
         <div className="text-gray-500 dark:text-gray-400">
           Awarded {award.times_awarded} times
         </div>
@@ -443,6 +457,24 @@ function AwardCard({ award, onEdit, onDelete, isDeleting }: AwardCardProps) {
             </span>
           )}
         </div>
+      </div>
+      
+      {/* Action Button */}
+      <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
+        <button
+          onClick={onManageWinners}
+          className="w-full px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 
+                   bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 
+                   rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/30 
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                   transition-colors flex items-center justify-center space-x-2"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                  d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+          </svg>
+          <span>Manage Winners</span>
+        </button>
       </div>
     </div>
   )
