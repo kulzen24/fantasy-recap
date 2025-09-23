@@ -3,15 +3,18 @@ Fantasy Football Recap Generator - FastAPI Backend
 """
 
 # Load environment variables FIRST, before any other imports
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
 
-# Get the absolute path to the root directory .env file
-# __file__ is: /path/to/fantasy-recaps/backend/app/main.py
-# We need: /path/to/fantasy-recaps/.env
-root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-env_path = os.path.join(root_dir, '.env')
-load_dotenv(env_path, override=True)
+# In production (Vercel), environment variables are set directly
+# In development, load from .env file
+if os.getenv('VERCEL') != '1':  # Not in Vercel environment
+    # Get the absolute path to the root directory .env file
+    # __file__ is: /path/to/fantasy-recaps/backend/app/main.py
+    # We need: /path/to/fantasy-recaps/.env
+    root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    env_path = os.path.join(root_dir, '.env')
+    load_dotenv(env_path, override=True)
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
